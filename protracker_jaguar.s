@@ -2746,7 +2746,7 @@ fin_ob_liste_originale:
 stoplist:		dc.l	0,4
 
 fonte:	
-	.include	"../fonte1plan.s"
+	.include	"fonte1plan.s"
 	even
 
 couleur_char:				dc.w		25
@@ -2762,7 +2762,7 @@ module_amiga:
 		.even
 
 sample:
-		incbin				"../YIPPEE.raw"					; 8 bits signés, 8000Hz
+		incbin				"YIPPEE.raw"					; 8 bits signés, 8000Hz
 fin_sample:
 
 
