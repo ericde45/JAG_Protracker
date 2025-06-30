@@ -2889,7 +2889,7 @@ taille_une_entree_buffer_asynchrone = 16
 	; => 16
 
 buffers_paula_asynchrones:
-		ds.b				taille_une_entree_buffer_asynchrone
+		ds.b				taille_une_entree_buffer_asynchrone*4
 
 
 
