@@ -101,6 +101,41 @@ n_wavestart     EQU 36                                                          
 n_reallength    EQU 40                                                           ; W
 n_realvolume    EQU 44                                                           ; W
 
+
+
+
+; index DSP, tout en .LONG
+; 1-32
+DSP_n_note          								EQU 	0                                                
+DSP_n_cmd           								EQU 	1                                                
+DSP_n_cmdlo         								EQU 	2                                                
+DSP_n_start         									EQU 	3                                                
+DSP_n_length        								EQU 	4                                                
+DSP_n_loopstart     								EQU 	5                                                
+DSP_n_replen        								EQU 	6                                                
+DSP_n_period        								EQU 	7                                                
+DSP_n_finetune      								EQU 	8                                                
+DSP_n_volume        							EQU 	9                                                
+DSP_n_dmabit        								EQU 	10                                              
+DSP_n_toneportdirec 							EQU 	11
+DSP_n_toneportspeed 						EQU 	12
+DSP_n_wantedperiod 	 					EQU	13
+DSP_n_vibratocmd    							EQU 	14                                              
+DSP_n_vibratopos  	  							EQU 	15                                             
+DSP_n_tremolocmd  							EQU 	16                                          
+DSP_n_tremolopos   							EQU 	17                                           
+DSP_n_wavecontrol  							EQU 	18                                            
+DSP_n_glissfunk     								EQU 	19                                            
+DSP_n_sampleoffset  						EQU	20
+DSP_n_pattpos       								EQU 	21
+DSP_n_funkoffset    							EQU	22
+DSP_n_wavestart     							EQU	23                                          
+DSP_n_loopcount    							EQU	24                                         
+DSP_n_reallength    							EQU	25                                           
+DSP_n_realvolume    							EQU	26                                        
+
+DSP_size_mt_chanXtemp				equ		27*4
+
 ;                   include    "protracker_macro.asm"
 
 
@@ -190,9 +225,12 @@ copie_couleurs:
 	moveq	#10,d0
 	bsr		print_caractere
 	
-    bsr        CIA_Install          ; install cia interrupts
+    ; bsr        CIA_Install          ; install cia interrupts
     lea        module_amiga,a0               ; module
     bsr        mt_init              ; init module
+	
+    lea        module_amiga,a0               ; module
+	bsr		DSP_mt_init
 
 	
 	
@@ -286,15 +324,85 @@ main2:
 
 
 ; -----------------------------------------------------
+; init protracker pour player DSP
+DSP_mt_init:            
+                   move.l		#0,DSP_mt_Enable 
+                 
+                   ;move.w     #DEFAULT_BPM,CIA_MusicBPM
+                   lea        		DSP_mt_chan1temp,a4
+                   move.w     	#((DSP_mt_chanend-DSP_mt_chan1temp)/4)-1,d7
+				   moveq		#0,d0
+.clear:
+                   move.l		d0,(a4)+
+                   dbra       		d7,.clear
+                    
+                   moveq      	#4-1,d7
+                   lea        		mt_chan1temp,a4
+                   moveq     	#$1,d0
+.dmaset:                   
+                   move.l     	d0,DSP_n_dmabit(a4)
+                   lsl.l		      	#1,d0
+                   lea       	 	mt_chan2temp-mt_chan1temp(a4),a4
+                   dbra       		d7,.dmaset
+
+                   MOVE.L     A0,mt_SongDataPtr
+				   
+                   MOVE.L     A0,A1
+                   LEA        		952(A1),A1
+                   MOVEQ      #127,D0
+                   MOVEQ      #0,D1
+DSP_mtloop:             
+					MOVE.L     D1,D2
+                   SUBQ.W     #1,D0
+DSP_mtloop2:
+					MOVE.B     (A1)+,D1
+                   CMP.B      D2,D1
+                   BGT.S      DSP_mtloop
+                   DBRA       D0,DSP_mtloop2
+                   ADDQ.B     #1,D2
+			
+                   LEA        mt_SampleStarts,A1
+                   ASL.L      #8,D2
+                   ASL.L      #2,D2
+                   ADD.L      #1084,D2
+                   ADD.L      A0,D2
+                   MOVE.L     D2,A2
+                   MOVEQ      #30,D0
+DSP_mtloop3:            CLR.L      (A2)
+                   MOVE.L     A2,(A1)+
+                   MOVEQ      #0,D1
+                   MOVE.W     42(A0),D1
+                   ASL.L      #1,D1
+                   ADD.L      D1,A2
+                   ADD.L      #30,A0
+                   DBRA       D0,DSP_mtloop3
+
+                   ;OR.B       #2,$BFE001
+                   MOVE.L     #6,DSP_mt_speed
+                   CLR.L      DSP_mt_counter
+                   CLR.L      DSP_mt_SongPos
+                   CLR.L      DSP_mt_PatternPos
+DSP_mt_end:             
+					;CLR.W      $DFF0A8		; volume a zéro
+                   ;CLR.W      $DFF0B8
+                   ;CLR.W      $DFF0C8
+                   ;CLR.W      $DFF0D8
+                   ;MOVE.W     #$F,$DFF096	; dmacon
+                   RTS
+
+
+
+
+
 ; protracker Jaguar 68000
 
 ;// d1: PAL(0) or NTSC(1)//
 ; // a0 = vector base //
-CIA_Install:
+;CIA_Install:
                    ;PUSHALL
-                   move.w     #DEFAULT_BPM,d0
-                   move.w     d0,CIA_CurrentBPM
-                   move.w     d0,CIA_MusicBPM
+                   ;move.w     #DEFAULT_BPM,d0
+                   ;move.w     d0,CIA_CurrentBPM
+                   ;move.w     d0,CIA_MusicBPM
                    ;move.w     #(1<<13),$dff09a                                   ; disable CIA interrupt
                    ;lea        .LSP_MainIrq(pc),a0
                    ;move.l     CIA_Vector(pc),a5
@@ -321,18 +429,18 @@ CIA_Install:
                    ; move.w     #(1<<13),$dff09c                                   ; clear any req CIA
                    ; move.w     #$a000,$dff09a                                     ; CIA interrupt enabled
                    ;POPALL
-                   rts
+                   ;rts
 		
 ;.palClocks:        dc.l       1773447,1789773
 
-CIA_CurrentBPM:    dc.w       0
-CIA_MusicBPM:      dc.w       0
+;CIA_CurrentBPM:    dc.w       0
+;CIA_MusicBPM:      dc.w       0
 
 
 mt_init:            
                    SF         mt_Enable 
                  
-                   move.w     #DEFAULT_BPM,CIA_MusicBPM
+                   ;move.w     #DEFAULT_BPM,CIA_MusicBPM
                    lea        mt_chan1temp,a4
                    move.w     #mt_chanend-mt_chan1temp-1,d7
 .clear:
@@ -1115,7 +1223,7 @@ mt_SetSpeed:
                    MOVE.B     D0,mt_speed
                    RTS
 .ciaset:
-                   move.w     d0,CIA_MusicBPM
+                   ;move.w     d0,CIA_MusicBPM
                    rts
 
 .stop:
@@ -1369,13 +1477,53 @@ mt_funkend:
                    MOVEM.L    (SP)+,A0/D1
                    RTS
 
-mt_chan1temp:       dc.l       0,0,0,0,0,$00010000,0,  0,0,0,0,0
+
+DSP_mt_chan1temp:				ds.b						DSP_size_mt_chanXtemp
+DSP_mt_chan2temp:				ds.b						DSP_size_mt_chanXtemp
+DSP_mt_chan3temp:				ds.b						DSP_size_mt_chanXtemp
+DSP_mt_chan4temp:				ds.b						DSP_size_mt_chanXtemp
+DSP_mt_chanend:			; fin des mt_chan
+
+
+DSP_mt_SampleStarts:			ds.l							31			; pointeurs samples instruments
+
+DSP_mt_SongDataPtr:     		dc.l       					0
+
+DSP_mt_speed:      			     					dc.l	     6
+DSP_mt_counter:         							dc.l       0
+DSP_mt_SongPos:         							dc.l       0
+DSP_mt_PBreakPos:       						dc.l       0
+DSP_mt_PosJumpFlag:     					dc.l       0
+DSP_mt_PBreakFlag:      						dc.l       0
+DSP_mt_LowMask:         						dc.l       0
+DSP_mt_PattDelTime:     						dc.l       0
+DSP_mt_PattDelTime2:    						dc.l       0,0
+DSP_mt_PatternPos:     		 					dc.l       0
+DSP_mt_DMACONtemp:   					dc.l       0
+DSP_mt_LoadPointer:     						dc.l       0
+DSP_mt_Enable:          							dc.l       0
+		.phrase
+
+
+
+
+
+
+
+
+
+
+
+
+mt_chan1temp:       dc.l       0,0,0,0,0,$00010000,0,  0,0,0,0,0				; 12*4=48
 mt_chan2temp:       dc.l       0,0,0,0,0,$00020000,0,  0,0,0,0,0
 mt_chan3temp:       dc.l       0,0,0,0,0,$00040000,0,  0,0,0,0,0
 mt_chan4temp:       dc.l       0,0,0,0,0,$00080000,0,  0,0,0,0,0
-mt_chanend:
-mt_SampleStarts:    dc.l       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-                   dc.l       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+mt_chanend:			; fin des mt_chan
+
+
+mt_SampleStarts:    	dc.l	       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0				; 16
+										dc.l  	   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0					; 15
 
 mt_SongDataPtr:     dc.l       0
 
@@ -1900,12 +2048,24 @@ copy_custom_paula_to_buffers_paula_asynchrones:
 		movem.l			(a1)+,d0/d2-d4							; 4*4
 		movem.l			d0/d2-d4,(12*4)(a2)
 		
+		
+		.if					1=0
 		;clear
 		lea					Paula_custom,a1
 		moveq			#0,d0
 		.rept				16
 		move.l			d0,(a1)+
 		.endr
+		.endif
+		
+; ne clear  que interne ?
+		lea					Paula_custom,a1
+		moveq			#0,d0
+		move.l			d0,12(a1)
+		move.l			d0,12+16(a1)
+		move.l			d0,12+32(a1)
+		move.l			d0,12+48(a1)
+		
 		
 		rts
 
