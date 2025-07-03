@@ -1,3 +1,4 @@
 backups/
 *.o
 *.bin
+*.abs
