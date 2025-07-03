@@ -123,6 +123,38 @@ DSP_STACK_SIZE	equ  4	; long words
 DSP_USP		equ    (D_ENDRAM-(4*DSP_STACK_SIZE))
 DSP_ISP		equ    (DSP_USP-(4*DSP_STACK_SIZE))
 
+; index DSP, tout en .LONG
+; 1-32
+DSP_n_note          								EQU 	0
+DSP_n_cmd           								EQU 	1
+DSP_n_cmdlo         								EQU 	2
+DSP_n_start         									EQU 	3
+DSP_n_length        								EQU 	4
+DSP_n_loopstart     								EQU 	5
+DSP_n_replen        								EQU 	6
+DSP_n_period        								EQU 	7
+DSP_n_finetune      								EQU 	8
+DSP_n_volume        							EQU 	9
+DSP_n_dmabit        								EQU 	10
+DSP_n_toneportdirec 							EQU 	11
+DSP_n_toneportspeed 						EQU 	12
+DSP_n_wantedperiod 	 					EQU	13
+DSP_n_vibratocmd    							EQU 	14
+DSP_n_vibratopos  	  							EQU 	15
+DSP_n_tremolocmd  							EQU 	16
+DSP_n_tremolopos   							EQU 	17
+DSP_n_wavecontrol  							EQU 	18
+DSP_n_glissfunk     								EQU 	19
+DSP_n_sampleoffset  						EQU	20
+DSP_n_pattpos       								EQU 	21
+DSP_n_funkoffset    							EQU	22
+DSP_n_wavestart     							EQU	23
+DSP_n_loopcount    							EQU	24
+DSP_n_reallength    							EQU	25
+DSP_n_realvolume    							EQU	26
+
+DSP_size_mt_chanXtemp				equ		27*4
+
 	.68000
 PAULA_init:
 	moveq	#0,d0

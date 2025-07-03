@@ -103,44 +103,6 @@ n_reallength    EQU 40                            ; W
 n_realvolume    EQU 44                            ; W
 
 
-
-
-; index DSP, tout en .LONG
-; 1-32
-DSP_n_note          								EQU 	0                                                
-DSP_n_cmd           								EQU 	1                                                
-DSP_n_cmdlo         								EQU 	2                                                
-DSP_n_start         									EQU 	3                                                
-DSP_n_length        								EQU 	4                                                
-DSP_n_loopstart     								EQU 	5                                                
-DSP_n_replen        								EQU 	6                                                
-DSP_n_period        								EQU 	7                                                
-DSP_n_finetune      								EQU 	8                                                
-DSP_n_volume        							EQU 	9                                                
-DSP_n_dmabit        								EQU 	10                                              
-DSP_n_toneportdirec 							EQU 	11
-DSP_n_toneportspeed 						EQU 	12
-DSP_n_wantedperiod 	 					EQU	13
-DSP_n_vibratocmd    							EQU 	14                                              
-DSP_n_vibratopos  	  							EQU 	15                                             
-DSP_n_tremolocmd  							EQU 	16                                          
-DSP_n_tremolopos   							EQU 	17                                           
-DSP_n_wavecontrol  							EQU 	18                                            
-DSP_n_glissfunk     								EQU 	19                                            
-DSP_n_sampleoffset  						EQU	20
-DSP_n_pattpos       								EQU 	21
-DSP_n_funkoffset    							EQU	22
-DSP_n_wavestart     							EQU	23                                          
-DSP_n_loopcount    							EQU	24                                         
-DSP_n_reallength    							EQU	25                                           
-DSP_n_realvolume    							EQU	26                                        
-
-DSP_size_mt_chanXtemp				equ		27*4
-
-;                   include    "protracker_macro.asm"
-
-
-
 .opt "~Oall"
 
 .text
@@ -323,9 +285,9 @@ main2:
 
 ; -----------------------------------------------------
 ; init protracker pour player DSP
-DSP_mt_init:            
-                   move.l		#0,DSP_mt_Enable 
-                 
+DSP_mt_init:
+                   move.l		#0,DSP_mt_Enable
+
                    ;move.w     #DEFAULT_BPM,CIA_MusicBPM
                    lea        		DSP_mt_chan1temp,a4
                    move.w     	#((DSP_mt_chanend-DSP_mt_chan1temp)/4)-1,d7
@@ -333,23 +295,23 @@ DSP_mt_init:
 .clear:
                    move.l		d0,(a4)+
                    dbra       		d7,.clear
-                    
+
                    moveq      	#4-1,d7
                    lea        		mt_chan1temp,a4
                    moveq     	#$1,d0
-.dmaset:                   
+.dmaset:
                    move.l     	d0,DSP_n_dmabit(a4)
                    lsl.l		      	#1,d0
                    lea       	 	mt_chan2temp-mt_chan1temp(a4),a4
                    dbra       		d7,.dmaset
 
                    MOVE.L     A0,mt_SongDataPtr
-				   
+
                    MOVE.L     A0,A1
                    LEA        		952(A1),A1
                    MOVEQ      #127,D0
                    MOVEQ      #0,D1
-DSP_mtloop:             
+DSP_mtloop:
 					MOVE.L     D1,D2
                    SUBQ.W     #1,D0
 DSP_mtloop2:
@@ -358,7 +320,7 @@ DSP_mtloop2:
                    BGT.S      DSP_mtloop
                    DBRA       D0,DSP_mtloop2
                    ADDQ.B     #1,D2
-			
+
                    LEA        mt_SampleStarts,A1
                    ASL.L      #8,D2
                    ASL.L      #2,D2
@@ -380,7 +342,7 @@ DSP_mtloop3:            CLR.L      (A2)
                    CLR.L      DSP_mt_counter
                    CLR.L      DSP_mt_SongPos
                    CLR.L      DSP_mt_PatternPos
-DSP_mt_end:             
+DSP_mt_end:
 					;CLR.W      $DFF0A8		; volume a zéro
                    ;CLR.W      $DFF0B8
                    ;CLR.W      $DFF0C8
@@ -2046,7 +2008,7 @@ copy_custom_paula_to_buffers_paula_asynchrones:
     movem.l      (a1)+,d0/d2-d4              ; 4*4
     movem.l      d0/d2-d4,(12*4)(a2)
 
-		
+
 		.if					1=0
     ;clear
     lea          Paula_custom,a1
@@ -2055,7 +2017,7 @@ copy_custom_paula_to_buffers_paula_asynchrones:
     move.l      d0,(a1)+
     .endr
 		.endif
-		
+
 ; ne clear  que interne ?
 		lea					Paula_custom,a1
 		moveq			#0,d0
@@ -2063,7 +2025,7 @@ copy_custom_paula_to_buffers_paula_asynchrones:
 		move.l			d0,12+16(a1)
 		move.l			d0,12+32(a1)
 		move.l			d0,12+48(a1)
-		
+
 
     rts
 
@@ -2654,8 +2616,6 @@ print_caractere_pas_retourdebutligne:
   sub.w  #8,curseur_y
   movem.l (a7)+,d0-d7/a0-a6
   rts
-
-
 print_caractere_pas_retourdebutligneaudessus:
 
   lea    ecran1,a1
@@ -2812,11 +2772,9 @@ address_error_68000_2:
   bra.s  address_error_68000_2
 
 
-  .68000
-  .dphrase
+  long
   .text
 
-  .phrase
   .include  "Paula_v2_1_include.s"
 
   .68000
@@ -2827,7 +2785,6 @@ address_error_68000_2:
   .endr
 
   .data
-
 
   .dphrase
 Paula_custom:
@@ -2913,8 +2870,6 @@ curseur_y:          dc.w    curseur_Y_min
 compteur_frame_music:      dc.w        0
     even
 
-
-
 module_amiga:
     incbin        "ELYSIUM.MOD"
     .even
@@ -2922,8 +2877,6 @@ module_amiga:
 sample:
     incbin        "YIPPEE.raw"          ; 8 bits signés, 8000Hz
 fin_sample:
-
-
 
 mt_FunkTable:       dc.b       0,5,6,7,8,10,11,13,16,19,22,26,32,43,64,128
 
@@ -2999,41 +2952,10 @@ mt_PeriodTable:
                    dc.w       431,407,384,363,342,323,305,288,272,256,242,228
                    dc.w       216,203,192,181,171,161,152,144,136,128,121,114
 
-
-
-
   .bss
 
 DEBUT_BSS:
-
-
-
-
 ;------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   .phrase
 taille_une_entree_buffer_asynchrone = 16
