@@ -2082,17 +2082,14 @@ plays_speech_sfx:
 ; recopie l'object list dans la courante
 
 copy_olist:
+	moveq	#0,d0
         move.l  #ob_list_courante,A1_BASE      ; = DEST
-        move.l  #$0,A1_PIXEL
+        move.l  d0,A1_PIXEL
         move.l  #PIXEL16|XADDPHR|PITCH1,A1_FLAGS
         move.l  #ob_liste_originale,A2_BASE      ; = source
-        move.l  #$0,A2_PIXEL
+        move.l  d0,A2_PIXEL
         move.l  #PIXEL16|XADDPHR|PITCH1,A2_FLAGS
-        move.w  #1,d0
-        swap  d0
-        move.l  #fin_ob_liste_originale-ob_liste_originale,d1
-        move.w  d1,d0
-        move.l  d0,B_COUNT
+        move.l  #(1<<16)|fin_ob_liste_originale-ob_liste_originale,B_COUNT
         move.l  #LFU_REPLACE|SRCEN,B_CMD
         rts
 
@@ -2260,7 +2257,6 @@ chaine_replay_volumes:      dc.b  "volumes music/SFX : ",0
 ob_liste_originale:                    ; This is the label you will use to address this in 68K code
         .objproc                  ; Engage the OP assembler
     .dphrase
-
         .org    ob_list_courante       ; Tell the OP assembler where the list will execute
 ;
         branch      VC < 0, .stahp           ; Branch to the STOP object if VC < 0
