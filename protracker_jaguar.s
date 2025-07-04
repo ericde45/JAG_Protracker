@@ -1438,42 +1438,7 @@ mt_funkend:
                    RTS
 
 
-DSP_mt_chan1temp:				ds.b						DSP_size_mt_chanXtemp
-DSP_mt_chan2temp:				ds.b						DSP_size_mt_chanXtemp
-DSP_mt_chan3temp:				ds.b						DSP_size_mt_chanXtemp
-DSP_mt_chan4temp:				ds.b						DSP_size_mt_chanXtemp
-DSP_mt_chanend:			; fin des mt_chan
-
-
-DSP_mt_SampleStarts:			ds.l							31			; pointeurs samples instruments
-
-DSP_mt_SongDataPtr:     		dc.l       					0
-
-DSP_mt_speed:      			     					dc.l	     6
-DSP_mt_counter:         							dc.l       0
-DSP_mt_SongPos:         							dc.l       0
-DSP_mt_PBreakPos:       						dc.l       0
-DSP_mt_PosJumpFlag:     					dc.l       0
-DSP_mt_PBreakFlag:      						dc.l       0
-DSP_mt_LowMask:         						dc.l       0
-DSP_mt_PattDelTime:     						dc.l       0
-DSP_mt_PattDelTime2:    						dc.l       0,0
-DSP_mt_PatternPos:     		 					dc.l       0
-DSP_mt_DMACONtemp:   					dc.l       0
-DSP_mt_LoadPointer:     						dc.l       0
-DSP_mt_Enable:          							dc.l       0
 		.phrase
-
-
-
-
-
-
-
-
-
-
-
 
 mt_chan1temp:       dc.l       0,0,0,0,0,$00010000,0,  0,0,0,0,0				; 12*4=48
 mt_chan2temp:       dc.l       0,0,0,0,0,$00020000,0,  0,0,0,0,0
@@ -1502,13 +1467,6 @@ mt_LoadPointer:     dc.w       0
 mt_Enable:          dc.b       0
     .phrase
 ; -----------------------------------------------------
-
-
-
-
-
-
-
 
 ; ----------- display infos --------
 display_infos:
@@ -2122,547 +2080,7 @@ plays_speech_sfx:
 
     rts
 
-
-; ---------------------------------------
-; print pads status
-; Pads : mask = xxxxxxCx xxBx2580 147*oxAP 369#RLDU
-print_pads_status:
-
-  move.l    DSP_pad1,d1
-  lea      string_pad_status,a0
-  move.l    #31,d6
-
-.boucle:
-  moveq    #0,d0
-  btst.l    d6,d1
-  beq.s    .print_space
-  move.b    (a0)+,d0
-  bsr      print_caractere
-  bra.s    .ok
-.print_space:
-  move.b    #'.',d0
-  bsr      print_caractere
-  lea      1(a0),a0
-.ok:
-  dbf      d6,.boucle
-
-; ligne suivante
-  moveq    #10,d0
-  bsr      print_caractere
-
-print_pads_status_pad2:
-; pad2
-  move.l    DSP_pad2,d1
-  lea      string_pad_status,a0
-  move.l    #31,d6
-
-.boucle2:
-  moveq    #0,d0
-  btst.l    d6,d1
-  beq.s    .print_space2
-  move.b    (a0)+,d0
-  bsr      print_caractere
-  bra.s    .ok2
-.print_space2:
-  move.b    #'.',d0
-  bsr      print_caractere
-  lea      1(a0),a0
-.ok2:
-  dbf      d6,.boucle2
-
-; ligne suivante
-  moveq    #10,d0
-  bsr      print_caractere
-
-
-  rts
-
-string_pad_status:    dc.b    "......CE..BD2580147*oFAp369#RLDU"
-    even
-
-; ---------------------------------------
-; imprime une chaine terminée par un zéro
-; a0=pointeur sur chaine
-print_string:
-  movem.l d0-d7/a0-a6,-(a7)
-
-print_string_boucle:
-  moveq  #0,d0
-  move.b  (a0)+,d0
-  cmp.w  #0,d0
-  bne.s  print_string_pas_fin_de_chaine
-  movem.l (a7)+,d0-d7/a0-a6
-  rts
-print_string_pas_fin_de_chaine:
-  bsr    print_caractere
-  bra.s  print_string_boucle
-
-; ---------------------------------------
-; imprime un nombre HEXA de 2 chiffres
-print_nombre_hexa_2_chiffres:
-  movem.l d0-d7/a0-a6,-(a7)
-  lea    convert_hexa,a0
-  move.l    d0,d1
-  divu    #16,d0
-  and.l    #$F,d0      ; limite a 0-15
-  move.l    d0,d2
-  mulu    #16,d2
-  sub.l    d2,d1
-  move.b    (a0,d0.w),d0
-  bsr      print_caractere
-  move.l    d1,d0
-  and.l    #$F,d0      ; limite a 0-15
-  move.b    (a0,d0.w),d0
-  bsr      print_caractere
-  movem.l (a7)+,d0-d7/a0-a6
-  rts
-
-convert_hexa:
-  dc.b    48,49,50,51,52,53,54,55,56,57
-  dc.b    65,66,67,68,69,70
-  even
-
-; ---------------------------------------
-; imprime un nombre de 2 chiffres
-print_nombre_2_chiffres:
-  movem.l d0-d7/a0-a6,-(a7)
-  move.l    d0,d1
-  divu    #10,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #10,d2
-  sub.l    d2,d1
-  cmp.l    #0,d0
-  beq.s    .zap
-  add.l    #48,d0
-  bsr      print_caractere
-.zap:
-  move.l    d1,d0
-  add.l    #48,d0
-  bsr      print_caractere
-  movem.l (a7)+,d0-d7/a0-a6
-  rts
-
-; ---------------------------------------
-; imprime un nombre de 3 chiffres
-print_nombre_3_chiffres:
-  movem.l d0-d7/a0-a6,-(a7)
-  move.l    d0,d1
-
-  divu    #100,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #100,d2
-  sub.l    d2,d1
-  cmp.l    #0,d0
-  beq.s    .zap
-  add.l    #48,d0
-  bsr      print_caractere
-.zap:
-  move.l    d1,d0
-  divu    #10,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #10,d2
-  sub.l    d2,d1
-  add.l    #48,d0
-  bsr      print_caractere
-
-  move.l    d1,d0
-  add.l    #48,d0
-  bsr      print_caractere
-  movem.l (a7)+,d0-d7/a0-a6
-  rts
-
-
-; ---------------------------------------
-; imprime un nombre de 2 chiffres , 00
-print_nombre_2_chiffres_force:
-  movem.l d0-d7/a0-a6,-(a7)
-  move.l    d0,d1
-  divu    #10,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #10,d2
-  sub.l    d2,d1
-  add.l    #48,d0
-  bsr      print_caractere
-  move.l    d1,d0
-  add.l    #48,d0
-  bsr      print_caractere
-  movem.l (a7)+,d0-d7/a0-a6
-  rts
-
-; ---------------------------------------
-; imprime un nombre de 4 chiffres HEXA
-print_nombre_hexa_4_chiffres:
-  movem.l d0-d7/a0-a6,-(a7)
-  move.l    d0,d1
-  lea    convert_hexa,a0
-
-  divu    #4096,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #4096,d2
-  sub.l    d2,d1
-  move.b    (a0,d0.w),d0
-  bsr      print_caractere
-
-  move.l    d1,d0
-  divu    #256,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #256,d2
-  sub.l    d2,d1
-  move.b    (a0,d0.w),d0
-  bsr      print_caractere
-
-
-  move.l    d1,d0
-  divu    #16,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #16,d2
-  sub.l    d2,d1
-  move.b    (a0,d0.w),d0
-  bsr      print_caractere
-  move.l    d1,d0
-  move.b    (a0,d0.w),d0
-  bsr      print_caractere
-  movem.l (a7)+,d0-d7/a0-a6
-  rts
-
-; ---------------------------------------
-; imprime un nombre de 6 chiffres HEXA ( pour les adresses memoire)
-print_nombre_hexa_6_chiffres:
-  movem.l d0-d7/a0-a6,-(a7)
-
-  move.l    d0,d1
-  lea    convert_hexa,a0
-
-  move.l    d1,d0
-  swap    d0
-  and.l    #$F0,d0
-  divu    #16,d0
-  and.l    #$F,d0
-  move.b    (a0,d0.w),d0
-  and.l    #$FF,d0
-  bsr      print_caractere
-
-  move.l    d1,d0
-  swap    d0
-  and.l    #$F,d0
-  move.b    (a0,d0.w),d0
-  and.l    #$FF,d0
-  bsr      print_caractere
-
-  and.l    #$FFFF,d1
-  move.l    d1,d0
-  divu    #4096,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #4096,d2
-  sub.l    d2,d1
-  move.b    (a0,d0.w),d0
-  bsr      print_caractere
-
-  move.l    d1,d0
-  divu    #256,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #256,d2
-  sub.l    d2,d1
-  move.b    (a0,d0.w),d0
-  bsr      print_caractere
-
-
-  move.l    d1,d0
-  divu    #16,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #16,d2
-  sub.l    d2,d1
-  move.b    (a0,d0.w),d0
-  bsr      print_caractere
-  move.l    d1,d0
-  move.b    (a0,d0.w),d0
-  bsr      print_caractere
-  movem.l (a7)+,d0-d7/a0-a6
-  rts
-
-; ---------------------------------------
-; imprime un nombre de 8 chiffres HEXA ( pour les adresses memoire et les données en 16:16)
-print_nombre_hexa_8_chiffres:
-  movem.l d0-d7/a0-a6,-(a7)
-
-  move.l    d0,d1
-  lea    convert_hexa,a0
-
-  move.l    d1,d0
-  swap    d0
-  and.l    #$F000,d0
-  divu    #4096,d0
-  and.l    #$F,d0
-  move.b    (a0,d0.w),d0
-  and.l    #$FF,d0
-  bsr      print_caractere
-
-
-
-  move.l    d1,d0
-  swap    d0
-  and.l    #$F00,d0
-  divu    #256,d0
-  and.l    #$F,d0
-  move.b    (a0,d0.w),d0
-  and.l    #$FF,d0
-  bsr      print_caractere
-
-
-  move.l    d1,d0
-  swap    d0
-  and.l    #$F0,d0
-  divu    #16,d0
-  and.l    #$F,d0
-  move.b    (a0,d0.w),d0
-  and.l    #$FF,d0
-  bsr      print_caractere
-
-  move.l    d1,d0
-  swap    d0
-  and.l    #$F,d0
-  move.b    (a0,d0.w),d0
-  and.l    #$FF,d0
-  bsr      print_caractere
-
-  and.l    #$FFFF,d1
-  move.l    d1,d0
-  divu    #4096,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #4096,d2
-  sub.l    d2,d1
-  move.b    (a0,d0.w),d0
-  bsr      print_caractere
-
-  move.l    d1,d0
-  divu    #256,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #256,d2
-  sub.l    d2,d1
-  move.b    (a0,d0.w),d0
-  bsr      print_caractere
-
-
-  move.l    d1,d0
-  divu    #16,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #16,d2
-  sub.l    d2,d1
-  move.b    (a0,d0.w),d0
-  bsr      print_caractere
-  move.l    d1,d0
-  move.b    (a0,d0.w),d0
-  bsr      print_caractere
-  movem.l (a7)+,d0-d7/a0-a6
-  rts
-
-
-; ---------------------------------------
-; imprime un nombre de 4 chiffres
-print_nombre_4_chiffres:
-  movem.l d0-d7/a0-a6,-(a7)
-  move.l    d0,d1
-
-  divu    #1000,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #1000,d2
-  sub.l    d2,d1
-  add.l    #48,d0
-  bsr      print_caractere
-
-  move.l    d1,d0
-  divu    #100,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #100,d2
-  sub.l    d2,d1
-  add.l    #48,d0
-  bsr      print_caractere
-
-
-  move.l    d1,d0
-  divu    #10,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #10,d2
-  sub.l    d2,d1
-  add.l    #48,d0
-  bsr      print_caractere
-  move.l    d1,d0
-  add.l    #48,d0
-  bsr      print_caractere
-  movem.l (a7)+,d0-d7/a0-a6
-  rts
-
-; ---------------------------------------
-; imprime un nombre de 5 chiffres
-print_nombre_5_chiffres:
-  movem.l d0-d7/a0-a6,-(a7)
-  move.l    d0,d1
-
-  divu    #10000,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #10000,d2
-  sub.l    d2,d1
-  add.l    #48,d0
-  bsr      print_caractere
-
-  move.l    d1,d0
-  divu    #1000,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #1000,d2
-  sub.l    d2,d1
-  add.l    #48,d0
-  bsr      print_caractere
-
-  move.l    d1,d0
-  divu    #100,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #100,d2
-  sub.l    d2,d1
-  add.l    #48,d0
-  bsr      print_caractere
-
-
-  move.l    d1,d0
-  divu    #10,d0
-  and.l    #$FF,d0
-  move.l    d0,d2
-  mulu    #10,d2
-  sub.l    d2,d1
-  add.l    #48,d0
-  bsr      print_caractere
-  move.l    d1,d0
-  add.l    #48,d0
-  bsr      print_caractere
-  movem.l (a7)+,d0-d7/a0-a6
-  rts
-
-
-; -----------------------------
-; copie un caractere a l ecran
-; d0.w=caractere
-
-print_caractere:
-  movem.l d0-d7/a0-a6,-(a7)
-
-
-
-  cmp.b  #00,d0
-  bne.s  print_caractere_pas_CLS
-  move.l  #ecran1,A1_BASE      ; = DEST
-  move.l  #$0,A1_PIXEL
-  move.l  #PIXEL16|XADDPHR|PITCH1,A1_FLAGS
-  move.l  #ecran1+320*100,A2_BASE      ; = source
-  move.l  #$0,A2_PIXEL
-  move.l  #PIXEL16|XADDPHR|PITCH1,A2_FLAGS
-
-  move.w  #$00,B_PATD
-
-
-  moveq  #0,d0
-  move.w  #nb_octets_par_ligne,d0
-  lsr.w  #1,d0
-  move.w  #nb_lignes,d1
-  mulu  d1,d0
-  swap  d0
-  move.w  #1,d0
-  swap  d0
-  ;move.w  #65535,d0
-  move.l  d0,B_COUNT
-  move.l  #LFU_REPLACE|SRCEN|PATDSEL,B_CMD
-
-
-  movem.l (a7)+,d0-d7/a0-a6
-  rts
-
-print_caractere_pas_CLS:
-
-  cmp.b  #10,d0
-  bne.s  print_caractere_pas_retourchariot
-  move.w  #0,curseur_x
-  add.w  #8,curseur_y
-  movem.l (a7)+,d0-d7/a0-a6
-  rts
-
-print_caractere_pas_retourchariot:
-  cmp.b  #09,d0
-  bne.s  print_caractere_pas_retourdebutligne
-  move.w  #0,curseur_x
-  movem.l (a7)+,d0-d7/a0-a6
-  rts
-
-print_caractere_pas_retourdebutligne:
-  cmp.b  #08,d0
-  bne.s  print_caractere_pas_retourdebutligneaudessus
-  move.w  #0,curseur_x
-  sub.w  #8,curseur_y
-  movem.l (a7)+,d0-d7/a0-a6
-  rts
-print_caractere_pas_retourdebutligneaudessus:
-
-  lea    ecran1,a1
-  moveq  #0,d1
-  move.w  curseur_x,d1
-  add.l  d1,a1
-  moveq  #0,d1
-  move.w  curseur_y,d1
-  mulu  #nb_octets_par_ligne,d1
-  add.l  d1,a1
-
-  lsl.l  #3,d0    ; * 8
-  lea    fonte,a0
-  add.l  d0,a0
-
-
-; copie 1 lettre
-  move.l  #8-1,d0
-copieC_ligne:
-  moveq  #8-1,d1
-  move.b  (a0)+,d2
-copieC_colonne:
-  moveq  #0,d4
-  btst  d1,d2
-  beq.s  pixel_a_zero
-  moveq  #0,d4
-  move.w  couleur_char,d4
-pixel_a_zero:
-  move.b  d4,(a1)+
-  dbf    d1,copieC_colonne
-  lea    nb_octets_par_ligne-8(a1),a1
-  dbf    d0,copieC_ligne
-
-  move.w  curseur_x,d0
-  add.w  #8,d0
-  cmp.w  #320,d0
-  blt    curseur_pas_fin_de_ligne
-  moveq  #0,d0
-  add.w  #8,curseur_y
-curseur_pas_fin_de_ligne:
-  move.w  d0,curseur_x
-
-  movem.l (a7)+,d0-d7/a0-a6
-
-  rts
-
-
+	include "print.inc"
 ;----------------------------------
 ; recopie l'object list dans la courante
 
@@ -2688,63 +2106,48 @@ copy_olist:
 ;;
 
 InitVideo:
-                movem.l d0-d6,-(sp)
+;; -*-asm-*-
+;;****************
+;;   videoinit   *
+VideoInit:
+        movem.l d0-d2/a0,-(sp)
+	movem.l	pal_init(pc),d0-d2/a0
+        btst    #4,$00F14003
+        beq.s   VideoInit1              ;; =0 => PAL
+	movem.l	ntsc_init(pc),d0-d2
+VideoInit1:
+        move.l  d2,(a0)+                ; HDB1/2
+        move.w  d0,(a0)+                ; HDE
+        addq.l  #8,a0
 
+        swap    d0
+        move.w  d0,(a0)+                ; VDB
 
-        move.w  #-1,ntsc_flag
-        move.l  #50,_50ou60hertz
+        move.w  d0,a_vdb
 
-        move.w  CONFIG,d0                ; Also is joystick register
-                andi.w  #VIDTYPE,d0              ; 0 = PAL, 1 = NTSC
-                beq     .palvals
-        move.w  #1,ntsc_flag
-        move.l  #60,_50ou60hertz
+        move.w  d1,(a0)+                ; VDE
 
+        move.w  d1,a_vde
 
-.ntscvals:    move.w  #NTSC_HMID,d2
-                move.w  #NTSC_WIDTH,d0
-
-                move.w  #NTSC_VMID,d6
-                move.w  #NTSC_HEIGHT,d4
-
-                bra     calc_vals
-.palvals:
-        move.w #PAL_HMID,d2
-        move.w #PAL_WIDTH,d0
-
-        move.w #PAL_VMID,d6
-        move.w #PAL_HEIGHT,d4
-
-
-calc_vals:
-                move.w  d0,width
-                move.w  d4,height
-                move.w  d0,d1
-                asr     #1,d1                   ; Width/2
-                sub.w   d1,d2                   ; Mid - Width/2
-                add.w   #4,d2                   ; (Mid - Width/2)+4
-                sub.w   #1,d1                   ; Width/2 - 1
-                ori.w   #$400,d1                ; (Width/2 - 1)|$400
-                move.w  d1,a_hde
-                move.w  d1,HDE
-                move.w  d2,a_hdb
-                move.w  d2,HDB1
-                move.w  d2,HDB2
-                move.w  d6,d5
-                sub.w   d4,d5
-                add.w   #16,d5
-                move.w  d5,a_vdb
-                add.w   d4,d6
-                move.w  d6,a_vde
-
-          move.w  a_vdb,VDB
-        move.w  a_vde,VDE
-
+	moveq   #-1,d0
+        move.w  d0,$4e-$48(a0)          ; VI
 
         move.l  #0,BORD1                ; Black border
-                move.w  #0,BG                   ; Init line buffer to black
-                movem.l (sp)+,d0-d6
-                rts
+        move.w  #0,BG                   ; Init line buffer to black
+
+        movem.l (sp)+,d0-d2/a0
+        rts
+
+pal_init:
+	dc.l	(PAL_VMID-PAL_HEIGHT)<<16|(((PAL_WIDTH>>1)-1)|$0400)
+	dc.l	PAL_VMID+PAL_HEIGHT
+	dc.l	(PAL_HMID-(PAL_WIDTH>>1)+4)<<16|PAL_HMID-(PAL_WIDTH>>1)+4
+	dc.l	$f00038
+
+ntsc_init:
+	dc.l	(NTSC_VMID-NTSC_HEIGHT)<<16|(((NTSC_WIDTH>>1)-1)|$0400)
+	dc.l	NTSC_VMID+NTSC_HEIGHT
+	dc.l	(NTSC_HMID-(NTSC_WIDTH>>1)+4)<<16|NTSC_HMID-(NTSC_WIDTH>>1)+4
 
 ; - routines de debug
 ;
@@ -2783,6 +2186,31 @@ address_error_68000_2:
   .rept        7
   dc.l        0
   .endr
+
+DSP_mt_chan1temp:				ds.b						DSP_size_mt_chanXtemp
+DSP_mt_chan2temp:				ds.b						DSP_size_mt_chanXtemp
+DSP_mt_chan3temp:				ds.b						DSP_size_mt_chanXtemp
+DSP_mt_chan4temp:				ds.b						DSP_size_mt_chanXtemp
+DSP_mt_chanend:			; fin des mt_chan
+
+
+DSP_mt_SampleStarts:			ds.l							31			; pointeurs samples instruments
+
+DSP_mt_SongDataPtr:     		dc.l       					0
+
+DSP_mt_speed:      			     					dc.l	     6
+DSP_mt_counter:         							dc.l       0
+DSP_mt_SongPos:         							dc.l       0
+DSP_mt_PBreakPos:       						dc.l       0
+DSP_mt_PosJumpFlag:     					dc.l       0
+DSP_mt_PBreakFlag:      						dc.l       0
+DSP_mt_LowMask:         						dc.l       0
+DSP_mt_PattDelTime:     						dc.l       0
+DSP_mt_PattDelTime2:    						dc.l       0,0
+DSP_mt_PatternPos:     		 					dc.l       0
+DSP_mt_DMACONtemp:   					dc.l       0
+DSP_mt_LoadPointer:     						dc.l       0
+DSP_mt_Enable:          							dc.l       0
 
   .data
 
