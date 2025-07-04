@@ -25,7 +25,7 @@
 
 	include "u235_button.inc"
 
-flag_display_infos = 1
+flag_display_infos = 0
 mixage = 1
 lecture_valeurs_paula = 1
 
@@ -276,7 +276,7 @@ main2:
 
 
         .if        flag_display_infos=1
-        ;bsr      display_infos
+        bsr      display_infos
         .endif
         bra.s    main
 ;----------------
@@ -1469,6 +1469,7 @@ mt_Enable:          dc.b       0
 ; -----------------------------------------------------
 
 ; ----------- display infos --------
+        .if        flag_display_infos=1
 display_infos:
   .if      channel_1=1
 ; pointeur sample en cours / interne
@@ -1910,7 +1911,7 @@ display_infos:
 
 
   rts
-
+ endif
 ;-----------------------------------------------------------------------------------
 ;--------------------------
 ; VBL
@@ -1921,7 +1922,6 @@ VBL:
                 movem.l   d0-d7/a0-a6,-(a7)
                 bsr     copy_olist                ; use Blitter to update active list from shadow
                 addq.l  #1,vbl_counter
-
 
 ; test keys / pad
 ; xxxxxxCx xxBx2580 147*oxAP 369#RLDU
@@ -2077,9 +2077,6 @@ plays_speech_sfx:
 .exit:
       rts
 
-
-    rts
-
 	include "print.inc"
 ;----------------------------------
 ; recopie l'object list dans la courante
@@ -2187,30 +2184,30 @@ address_error_68000_2:
   dc.l        0
   .endr
 
-DSP_mt_chan1temp:				ds.b						DSP_size_mt_chanXtemp
-DSP_mt_chan2temp:				ds.b						DSP_size_mt_chanXtemp
-DSP_mt_chan3temp:				ds.b						DSP_size_mt_chanXtemp
-DSP_mt_chan4temp:				ds.b						DSP_size_mt_chanXtemp
-DSP_mt_chanend:			; fin des mt_chan
+DSP_mt_chan1temp:        ds.b            DSP_size_mt_chanXtemp
+DSP_mt_chan2temp:        ds.b            DSP_size_mt_chanXtemp
+DSP_mt_chan3temp:        ds.b            DSP_size_mt_chanXtemp
+DSP_mt_chan4temp:        ds.b            DSP_size_mt_chanXtemp
+DSP_mt_chanend:      ; fin des mt_chan
 
 
-DSP_mt_SampleStarts:			ds.l							31			; pointeurs samples instruments
+DSP_mt_SampleStarts:      ds.l              31      ; pointeurs samples instruments
 
-DSP_mt_SongDataPtr:     		dc.l       					0
+DSP_mt_SongDataPtr:         dc.l                 0
 
-DSP_mt_speed:      			     					dc.l	     6
-DSP_mt_counter:         							dc.l       0
-DSP_mt_SongPos:         							dc.l       0
-DSP_mt_PBreakPos:       						dc.l       0
-DSP_mt_PosJumpFlag:     					dc.l       0
-DSP_mt_PBreakFlag:      						dc.l       0
-DSP_mt_LowMask:         						dc.l       0
-DSP_mt_PattDelTime:     						dc.l       0
-DSP_mt_PattDelTime2:    						dc.l       0,0
-DSP_mt_PatternPos:     		 					dc.l       0
-DSP_mt_DMACONtemp:   					dc.l       0
-DSP_mt_LoadPointer:     						dc.l       0
-DSP_mt_Enable:          							dc.l       0
+DSP_mt_speed:                      dc.l       6
+DSP_mt_counter:                       dc.l       0
+DSP_mt_SongPos:                       dc.l       0
+DSP_mt_PBreakPos:                   dc.l       0
+DSP_mt_PosJumpFlag:               dc.l       0
+DSP_mt_PBreakFlag:                  dc.l       0
+DSP_mt_LowMask:                     dc.l       0
+DSP_mt_PattDelTime:                 dc.l       0
+DSP_mt_PattDelTime2:                dc.l       0,0
+DSP_mt_PatternPos:                    dc.l       0
+DSP_mt_DMACONtemp:             dc.l       0
+DSP_mt_LoadPointer:                 dc.l       0
+DSP_mt_Enable:                        dc.l       0
 
   .data
 
