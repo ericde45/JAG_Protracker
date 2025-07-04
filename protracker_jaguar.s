@@ -12,9 +12,9 @@
 
 
 ; 3 etape:
-	; - play normal
-	; - dmacon, remplissage interne / forcer sample + maj volumes
-	; - remplis location+length pour bouclages
+  ; - play normal
+  ; - dmacon, remplissage interne / forcer sample + maj volumes
+  ; - remplis location+length pour bouclages
 
     ; sub.l      a0,a0                ; vector base, go find it yourself
     ; moveq      #0,d1                ; 0 = pal / 1 = ntsc
@@ -23,18 +23,19 @@
     ; bsr        mt_init              ; init module
     ; st         mt_Enable            ; enable playback
 
+	include "u235_button.inc"
 
-flag_display_infos=1
-mixage=1
-lecture_valeurs_paula=1
+flag_display_infos = 0
+mixage = 1
+lecture_valeurs_paula = 1
 
-channel_1		.equ		1
-channel_2		.equ		1
-channel_3		.equ		1
-channel_4		.equ		1
+channel_1    .equ    1
+channel_2    .equ    1
+channel_3    .equ    1
+channel_4    .equ    1
 
-volume_music=256				; 0-256
-volume_SFX=80					; 0-256
+volume_music = 256        ; 0-256
+volume_SFX = 200          ; 0-256
 
 ;-------------------------
 ;CC (Carry Clear) = %00100
@@ -55,312 +56,258 @@ COULEUR_MARQUEUR_violet=$00FF00FF
 COULEUR_MARQUEUR_jaune=$FFFF0000
 COULEUR_MARQUEUR_blanc=$FFFF00FF
 
-	include	"jaguar.inc"
-CLEAR_BSS			.equ			1									; 1=efface toute la BSS jusqu'a la fin de la ram utilisée
+  include  "jaguar.inc"
 
+CLEAR_BSS      .equ      1                  ; 1=efface toute la BSS jusqu'a la fin de la ram utilisée
 
 ; ----------------------------
 ; parametres affichage
-;ob_liste_originale			equ		(ENDRAM-$4000)							; address of list (shadow)
-ob_list_courante			equ		((ENDRAM-$4000)+$2000)				; address of read list
-nb_octets_par_ligne			equ		320
-nb_lignes					equ		256
+;ob_liste_originale      equ    (ENDRAM-$4000)              ; address of list (shadow)
+ob_list_courante      equ    ((ENDRAM-$4000)+$2000)        ; address of read list
+nb_octets_par_ligne      equ    320
+nb_lignes          equ    256
 
-curseur_Y_min		.equ		8
-
-
-
-
-DEFAULT_BPM       = 125                                                          ; well, I found this useful.
-
-n_note          EQU 0                                                            ; W
-n_cmd           EQU 2                                                            ; W
-n_cmdlo         EQU 3                                                            ; B
-n_start         EQU 4                                                            ; L
-n_length        EQU 8                                                            ; W
-n_loopstart     EQU 10                                                           ; L
-n_replen        EQU 14                                                           ; W
-n_period        EQU 16                                                           ; W
-n_finetune      EQU 18                                                           ; B
-n_volume        EQU 19                                                           ; B
-n_dmabit        EQU 20                                                           ; W
-n_toneportdirec EQU 22                                                           ; B
-n_toneportspeed EQU 23                                                           ; B
-n_wantedperiod  EQU 24                                                           ; W
-n_vibratocmd    EQU 26                                                           ; B
-n_vibratopos    EQU 27                                                           ; B
-n_tremolocmd    EQU 28                                                           ; B
-n_tremolopos    EQU 29                                                           ; B
-n_wavecontrol   EQU 30                                                           ; B
-n_glissfunk     EQU 31                                                           ; B
-n_sampleoffset  EQU 32                                                           ; B
-n_pattpos       EQU 33                                                           ; B
-n_loopcount     EQU 34                                                           ; B
-n_funkoffset    EQU 35                                                           ; B
-n_wavestart     EQU 36                                                           ; L
-n_reallength    EQU 40                                                           ; W
-n_realvolume    EQU 44                                                           ; W
+curseur_Y_min    .equ    8
 
 
 
 
-; index DSP, tout en .LONG
-; 1-32
-DSP_n_note          								EQU 	0                                                
-DSP_n_cmd           								EQU 	1                                                
-DSP_n_cmdlo         								EQU 	2                                                
-DSP_n_start         									EQU 	3                                                
-DSP_n_length        								EQU 	4                                                
-DSP_n_loopstart     								EQU 	5                                                
-DSP_n_replen        								EQU 	6                                                
-DSP_n_period        								EQU 	7                                                
-DSP_n_finetune      								EQU 	8                                                
-DSP_n_volume        							EQU 	9                                                
-DSP_n_dmabit        								EQU 	10                                              
-DSP_n_toneportdirec 							EQU 	11
-DSP_n_toneportspeed 						EQU 	12
-DSP_n_wantedperiod 	 					EQU	13
-DSP_n_vibratocmd    							EQU 	14                                              
-DSP_n_vibratopos  	  							EQU 	15                                             
-DSP_n_tremolocmd  							EQU 	16                                          
-DSP_n_tremolopos   							EQU 	17                                           
-DSP_n_wavecontrol  							EQU 	18                                            
-DSP_n_glissfunk     								EQU 	19                                            
-DSP_n_sampleoffset  						EQU	20
-DSP_n_pattpos       								EQU 	21
-DSP_n_funkoffset    							EQU	22
-DSP_n_wavestart     							EQU	23                                          
-DSP_n_loopcount    							EQU	24                                         
-DSP_n_reallength    							EQU	25                                           
-DSP_n_realvolume    							EQU	26                                        
+DEFAULT_BPM       = 125                           ; well, I found this useful.
 
-DSP_size_mt_chanXtemp				equ		27*4
-
-;                   include    "protracker_macro.asm"
-
+n_note          EQU 0                             ; W
+n_cmd           EQU 2                             ; W
+n_cmdlo         EQU 3                             ; B
+n_start         EQU 4                             ; L
+n_length        EQU 8                             ; W
+n_loopstart     EQU 10                            ; L
+n_replen        EQU 14                            ; W
+n_period        EQU 16                            ; W
+n_finetune      EQU 18                            ; B
+n_volume        EQU 19                            ; B
+n_dmabit        EQU 20                            ; W
+n_toneportdirec EQU 22                            ; B
+n_toneportspeed EQU 23                            ; B
+n_wantedperiod  EQU 24                            ; W
+n_vibratocmd    EQU 26                            ; B
+n_vibratopos    EQU 27                            ; B
+n_tremolocmd    EQU 28                            ; B
+n_tremolopos    EQU 29                            ; B
+n_wavecontrol   EQU 30                            ; B
+n_glissfunk     EQU 31                            ; B
+n_sampleoffset  EQU 32                            ; B
+n_pattpos       EQU 33                            ; B
+n_loopcount     EQU 34                            ; B
+n_funkoffset    EQU 35                            ; B
+n_wavestart     EQU 36                            ; L
+n_reallength    EQU 40                            ; W
+n_realvolume    EQU 44                            ; W
 
 
 .opt "~Oall"
 
 .text
 
-			.68000
+      .68000
 
 relaunch_all:
-	move.l		#$70007,G_END
-	move.l		#$70007,D_END
-	move.l		#INITSTACK-128, sp	
+  move.l    #$70007,G_END
+  move.l    #$70007,D_END
+  move.l    #INITSTACK-128, sp
 
 ; routines de debug
-	lea			bus_error_68000,a0
-	move.l		a0,$0008.w
-	move.l		#address_error_68000,$C.w
+  lea      bus_error_68000,a0
+  move.l    a0,$0008.w
+  move.l    #address_error_68000,$C.w
 
 ; init curseur / relaunch test
-	move.w		#25,couleur_char
-	move.w		#0,curseur_x
-	move.w		#curseur_Y_min,curseur_y
+  move.w    #25,couleur_char
+  move.w    #0,curseur_x
+  move.w    #curseur_Y_min,curseur_y
 ; init dsp volumes for relaunch test
-	move.l		#volume_SFX,DSP_volume_SFX
-	move.l		#volume_music,DSP_volume_music
+  move.l    #volume_SFX,DSP_volume_SFX
+  move.l    #volume_music,DSP_volume_music
 
+  move.w    #%0000011011000111, VMODE      ; 320x256
 
-	
-	move.w		#%0000011011000111, VMODE			; 320x256
-	
-	move.w		#$100,JOYSTICK
+  move.w    #$100,JOYSTICK
 
-
-	move.w		#801,VI			; stop VI
+  move.w    #801,VI      ; stop VI
 
 ; clear BSS
-	lea			DEBUT_BSS,a0
-	lea			FIN_RAM,a1
-	moveq		#0,d0
-	
+  lea      DEBUT_BSS,a0
+  lea      FIN_RAM,a1
+  moveq    #0,d0
+
 boucle_clean_BSS:
-	move.b		d0,(a0)+
-	cmp.l		a0,a1
-	bne.s		boucle_clean_BSS
+  move.b    d0,(a0)+
+  cmp.l    a0,a1
+  bne.s    boucle_clean_BSS
 ; clear stack
-	lea			INITSTACK-100,a0
-	lea			INITSTACK,a1
-	moveq		#0,d0
-	
+  lea      INITSTACK-100,a0
+  lea      INITSTACK,a1
+  moveq    #0,d0
+
 boucle_clean_BSS2:
-	move.b		d0,(a0)+
-	cmp.l		a0,a1
-	bne.s		boucle_clean_BSS2
+  move.b    d0,(a0)+
+  cmp.l    a0,a1
+  bne.s    boucle_clean_BSS2
 
-    bsr     InitVideo               	; Setup our video registers.
+    bsr     InitVideo                 ; Setup our video registers.
 
-	jsr     copy_olist              	; use Blitter to update active list from shadow
+  jsr     copy_olist                ; use Blitter to update active list from shadow
 
-	move.l	#ob_list_courante,d0					; set the object list pointer
-	swap	d0
-	move.l	d0,OLP
+  move.l  #ob_list_courante,d0          ; set the object list pointer
+  swap  d0
+  move.l  d0,OLP
 
-	lea		CLUT,a2
-	move.l	#255-2,d7
-	moveq	#0,d0
-	
+  lea    CLUT,a2
+  move.l  #255-2,d7
+  moveq  #0,d0
+
 copie_couleurs:
-	move.w	d0,(a2)+
-	addq.l	#5,d0
-	dbf		d7,copie_couleurs
+  move.w  d0,(a2)+
+  addq.l  #5,d0
+  dbf    d7,copie_couleurs
 
-	lea		CLUT+2,a2
-	move.w	#$F00F,(a2)+
+  lea    CLUT+2,a2
+  move.w  #$F00F,(a2)+
 
 
 ; CLS
-	;moveq	#0,d0
-	;bsr		print_caractere
+  ;moveq  #0,d0
+  ;bsr    print_caractere
 
 ; init DSP
 
-	lea		chaine_HIPPEL,a0
-	bsr		print_string
+  lea    chaine_HIPPEL,a0
+  bsr    print_string
 ; ligne suivant
-	moveq	#10,d0
-	bsr		print_caractere
-	
+  moveq  #10,d0
+  bsr    print_caractere
+
     ; bsr        CIA_Install          ; install cia interrupts
     lea        module_amiga,a0               ; module
     bsr        mt_init              ; init module
-	
+
     lea        module_amiga,a0               ; module
 	bsr		DSP_mt_init
 
-	
-	
-	jsr				PAULA_init
- 
-	
-	
-	
-	
-	move.w		#0,compteur_frame_music
 
-	move.w		#85,couleur_char
+
+  jsr        PAULA_init
+
+
+
+
+
+//->  move.w    #0,compteur_frame_music
+  move.w    #85,couleur_char
 
 ; replay frequency
-	lea			chaine_replay_frequency,a0
-	bsr			print_string
+  lea      chaine_replay_frequency,a0
+  bsr      print_string
 
-	move.l		DSP_frequence_de_replay_reelle_I2S,d0
-	bsr			print_nombre_5_chiffres
+  move.l    DSP_frequence_de_replay_reelle_I2S,d0
+  bsr      print_nombre_5_chiffres
 
-	lea			chaine_Hz_init_LSP,a0
-	bsr			print_string
-	
-	lea			chaine_frequency_correction,a0
-	bsr			print_string
-	
-	move.l		#PAULA_corretion_frequence,d0
-	bsr			print_nombre_3_chiffres
+  lea      chaine_Hz_init_LSP,a0
+  bsr      print_string
+
+  lea      chaine_frequency_correction,a0
+  bsr      print_string
+
+  move.l    #PAULA_corretion_frequence,d0
+  bsr      print_nombre_3_chiffres
 ; ligne suivant
-	moveq	#10,d0
-	bsr		print_caractere
+  moveq  #10,d0
+  bsr    print_caractere
 
 ; ligne suivant
-	moveq	#10,d0
-	bsr		print_caractere
+  moveq  #10,d0
+  bsr    print_caractere
 
-	lea			chaine_replay_volumes,a0
-	bsr			print_string
-	move.l		DSP_volume_music,d0
-	bsr			print_nombre_3_chiffres
-	move.l	#' ',d0
-	bsr		print_caractere
-	move.l		DSP_volume_SFX,d0
-	bsr			print_nombre_3_chiffres
+  lea      chaine_replay_volumes,a0
+  bsr      print_string
+  move.l    DSP_volume_music,d0
+  bsr      print_nombre_3_chiffres
+  move.l  #' ',d0
+  bsr    print_caractere
+  move.l    DSP_volume_SFX,d0
+  bsr      print_nombre_3_chiffres
 ; ligne suivant
-	moveq	#10,d0
-	bsr		print_caractere
-
-	
-	move.w		#145,couleur_char
+  moveq  #10,d0
+  bsr    print_caractere
 
 
-	move.l  #VBL,LEVEL0     	; Install 68K LEVEL0 handler
-	move.w  a_vde,d0                	; Must be ODD
-	;sub.w   #16,d0
-	ori.w   #1,d0
-	move.w  d0,VI
+  move.w    #145,couleur_char
 
-	move.w  #%01,INT1                 	; Enable video interrupts 11101
+  move.l  #VBL,LEVEL0       ; Install 68K LEVEL0 handler
+  move.w  a_vde,d0                  ; Must be ODD
+  ori.w   #1,d0
+  move.w  d0,VI
 
-
-	;and.w   #%1111100011111111,sr				; 1111100011111111 => bits 8/9/10 = 0
-	and.w   #$f8ff,sr
-
+  move.w  #%01,INT1                   ; Enable video interrupts 11101
+  move.w #$2000,sr
 
     st         mt_Enable            ; enable playback
 
 ;----------------
-	nop
-	nop
 main:
 ; wait timer1
-				move.l		Paula_compteur_frames_Timer1,d0
+        move.l    Paula_compteur_frames_Timer1,d0
 main2:
-				cmp.l			Paula_compteur_frames_Timer1,d0
-				beq.s			main2
+        cmp.l      Paula_compteur_frames_Timer1,d0
+        beq.s      main2
 
-				bsr				mt_music
-				bsr				mt_music_copy_volume_and_enable_DMA
-				bsr				mt_music_copy_loop_pointers
-				bsr				copy_custom_paula_to_buffers_paula_asynchrones
+        bsr        mt_music
+        bsr        mt_music_copy_volume_and_enable_DMA
+        bsr        mt_music_copy_loop_pointers
+        bsr        copy_custom_paula_to_buffers_paula_asynchrones
 
-
-
-				.if				flag_display_infos=1
-				;bsr			display_infos
-				.endif
-				bra.s		main
+        .if        flag_display_infos=1
+        bsr      display_infos
+        .endif
+        bra.s    main
 ;----------------
-
-
 
 ; -----------------------------------------------------
 ; init protracker pour player DSP
-DSP_mt_init:            
-                   move.l		#0,DSP_mt_Enable 
-                 
+DSP_mt_init:
+                   move.l    #0,DSP_mt_Enable
+
                    ;move.w     #DEFAULT_BPM,CIA_MusicBPM
-                   lea        		DSP_mt_chan1temp,a4
-                   move.w     	#((DSP_mt_chanend-DSP_mt_chan1temp)/4)-1,d7
-				   moveq		#0,d0
+                   lea            DSP_mt_chan1temp,a4
+                   move.w       #((DSP_mt_chanend-DSP_mt_chan1temp)/4)-1,d7
+           moveq    #0,d0
 .clear:
-                   move.l		d0,(a4)+
-                   dbra       		d7,.clear
-                    
-                   moveq      	#4-1,d7
-                   lea        		mt_chan1temp,a4
-                   moveq     	#$1,d0
-.dmaset:                   
-                   move.l     	d0,DSP_n_dmabit(a4)
-                   lsl.l		      	#1,d0
-                   lea       	 	mt_chan2temp-mt_chan1temp(a4),a4
-                   dbra       		d7,.dmaset
+                   move.l    d0,(a4)+
+                   dbra           d7,.clear
+
+                   moveq        #4-1,d7
+                   lea            mt_chan1temp,a4
+                   moveq       #$1,d0
+.dmaset:
+                   move.l       d0,DSP_n_dmabit(a4)
+                   lsl.l       #1,d0
+                   lea            mt_chan2temp-mt_chan1temp(a4),a4
+                   dbra           d7,.dmaset
 
                    MOVE.L     A0,mt_SongDataPtr
-				   
+
                    MOVE.L     A0,A1
-                   LEA        		952(A1),A1
+                   LEA            952(A1),A1
                    MOVEQ      #127,D0
                    MOVEQ      #0,D1
-DSP_mtloop:             
-					MOVE.L     D1,D2
+DSP_mtloop:
+          MOVE.L     D1,D2
                    SUBQ.W     #1,D0
 DSP_mtloop2:
-					MOVE.B     (A1)+,D1
+          MOVE.B     (A1)+,D1
                    CMP.B      D2,D1
                    BGT.S      DSP_mtloop
                    DBRA       D0,DSP_mtloop2
                    ADDQ.B     #1,D2
-			
+
                    LEA        mt_SampleStarts,A1
                    ASL.L      #8,D2
                    ASL.L      #2,D2
@@ -382,7 +329,7 @@ DSP_mtloop3:            CLR.L      (A2)
                    CLR.L      DSP_mt_counter
                    CLR.L      DSP_mt_SongPos
                    CLR.L      DSP_mt_PatternPos
-DSP_mt_end:             
+DSP_mt_end:
 					;CLR.W      $DFF0A8		; volume a zéro
                    ;CLR.W      $DFF0B8
                    ;CLR.W      $DFF0C8
@@ -409,9 +356,9 @@ DSP_mt_end:
                    ;move.l     a0,(a5)
 
                    ;lea        $bfd000,a0
-                   ;move.b     #$7f,$d00(a0)				; CIAB interrupt control register
-                   ;move.b     #$10,$e00(a0)				; CIAB Control register A
-                   ;move.b     #$10,$f00(a0)				; CIAB Control register B
+                   ;move.b     #$7f,$d00(a0)        ; CIAB interrupt control register
+                   ;move.b     #$10,$e00(a0)        ; CIAB Control register A
+                   ;move.b     #$10,$f00(a0)        ; CIAB Control register B
                    ;lsl.w      #2,d1
                    ; move.l     .palClocks(pc,d1.w),d1                             ; PAL or NTSC clock
                    ; lea        CIA_Clock(pc),a5
@@ -422,7 +369,7 @@ DSP_mt_end:
                    ; move.b     d1,$500(a0)
                    ; move.b     #$83,$d00(a0)
                    ; move.b     #$11,$e00(a0)
-			
+
                    ; move.b     #496&255,$600(a0)                                  ; set timer b to 496 ( to set DMACON )
                    ; move.b     #496>>8,$700(a0)
 
@@ -430,27 +377,27 @@ DSP_mt_end:
                    ; move.w     #$a000,$dff09a                                     ; CIA interrupt enabled
                    ;POPALL
                    ;rts
-		
+
 ;.palClocks:        dc.l       1773447,1789773
 
 ;CIA_CurrentBPM:    dc.w       0
 ;CIA_MusicBPM:      dc.w       0
 
 
-mt_init:            
-                   SF         mt_Enable 
-                 
+mt_init:
+                   SF         mt_Enable
+
                    ;move.w     #DEFAULT_BPM,CIA_MusicBPM
                    lea        mt_chan1temp,a4
                    move.w     #mt_chanend-mt_chan1temp-1,d7
 .clear:
                    clr.b      (a4)+
                    dbra       d7,.clear
-                    
+
                    moveq      #4-1,d7
                    lea        mt_chan1temp,a4
                    move.w     #$1,d0
-.dmaset:                   
+.dmaset:
                    move.w     d0,n_dmabit(a4)
                    lsl.w      #1,d0
                    lea        mt_chan2temp-mt_chan1temp(a4),a4
@@ -468,7 +415,7 @@ mtloop2:            MOVE.B     (A1)+,D1
                    BGT.S      mtloop
                    DBRA       D0,mtloop2
                    ADDQ.B     #1,D2
-			
+
                    LEA        mt_SampleStarts,A1
                    ASL.L      #8,D2
                    ASL.L      #2,D2
@@ -490,12 +437,12 @@ mtloop3:            CLR.L      (A2)
                    CLR.B      mt_counter
                    CLR.B      mt_SongPos
                    CLR.W      mt_PatternPos
-mt_end:             
-					;CLR.W      $DFF0A8		; volume a zéro
+mt_end:
+          ;CLR.W      $DFF0A8    ; volume a zéro
                    ;CLR.W      $DFF0B8
                    ;CLR.W      $DFF0C8
                    ;CLR.W      $DFF0D8
-                   ;MOVE.W     #$F,$DFF096	; dmacon
+                   ;MOVE.W     #$F,$DFF096  ; dmacon
                    RTS
 
 
@@ -522,19 +469,19 @@ mt_NoNewNote:
 
 mt_NoNewAllChannels:
                    ;LEA        $DFF0A0,A5
-				   lea			Paula_custom,a5
+           lea      Paula_custom,a5
                    LEA        mt_chan1temp,A6
                    BSR        mt_CheckEfx
                    ;LEA        $DFF0B0,A5
-				   lea			Paula_custom+16,a5
+           lea      Paula_custom+16,a5
                    LEA        mt_chan2temp,A6
                    BSR        mt_CheckEfx
                    ;LEA        $DFF0C0,A5
-				   lea			Paula_custom+32,a5
+           lea      Paula_custom+32,a5
                    LEA        mt_chan3temp,A6
                    BSR        mt_CheckEfx
                    ;LEA        $DFF0D0,A5
-				   lea			Paula_custom+48,a5
+           lea      Paula_custom+48,a5
                    LEA        mt_chan4temp,A6
                    BRA        mt_CheckEfx
 
@@ -553,19 +500,19 @@ mt_GetNewNote:
                    CLR.W      mt_DMACONtemp
 
                    ;LEA        $DFF0A0,A5
-				   lea			Paula_custom,a5
+           lea      Paula_custom,a5
                    LEA        mt_chan1temp(PC),A6
                    BSR.S      mt_PlayVoice
                    ;LEA        $DFF0B0,A5
-				   lea			Paula_custom+16,a5
+           lea      Paula_custom+16,a5
                    LEA        mt_chan2temp(PC),A6
                    BSR.S      mt_PlayVoice
                    ;LEA        $DFF0C0,A5
-				   lea			Paula_custom+32,a5
+           lea      Paula_custom+32,a5
                    LEA        mt_chan3temp(PC),A6
                    BSR.S      mt_PlayVoice
                    ;LEA        $DFF0D0,A5
-				   lea			Paula_custom+48,a5
+           lea      Paula_custom+48,a5
                    LEA        mt_chan4temp(PC),A6
                    BSR.S      mt_PlayVoice
                    BRA        mt_SetDMA
@@ -704,7 +651,7 @@ mt_trenoc:
                    MOVE.W     n_dmabit(A6),D0
                    OR.W       D0,mt_DMACONtemp
                    BRA        mt_CheckMoreEfx
- 
+
 mt_SetDMA:
 ;   off loaded to stage 2 and 3
 ;                   MOVE.W     #DMAWait,D0
@@ -753,7 +700,7 @@ mt_dska:            TST.B      mt_PBreakFlag
 mt_nnpysk:
                    CMP.W      #1024,mt_PatternPos
                    BLO.S      mt_NoNewPosYet
-mt_NextPosition:	
+mt_NextPosition:
                    MOVEQ      #0,D0
                    MOVE.B     mt_PBreakPos(PC),D0
                    LSL.W      #4,D0
@@ -767,7 +714,7 @@ mt_NextPosition:
                    CMP.B      950(A0),D1
                    BLO.S      mt_NoNewPosYet
                    CLR.B      mt_SongPos
-mt_NoNewPosYet:	
+mt_NoNewPosYet:
                    TST.B      mt_PosJumpFlag
                    BNE.S      mt_NextPosition
                    MOVEM.L    (SP)+,D0-D4/A0-A6
@@ -873,8 +820,8 @@ mt_PortaUskip:
                    MOVE.W     n_period(A6),D0
                    AND.W      #$0FFF,D0
                    MOVE.W     D0,6(A5)
-                   RTS	
- 
+                   RTS
+
 mt_FinePortaDown:
                    TST.B      mt_counter
                    BNE        mt_Return2
@@ -1289,7 +1236,7 @@ mt_FilterOnOff:
                    ASL.B      #1,D0
                    AND.B      #$FD,$BFE001
                    OR.B       D0,$BFE001
-                   RTS	
+                   RTS
 
 mt_SetGlissControl:
                    MOVE.B     n_cmdlo(A6),D0
@@ -1478,42 +1425,7 @@ mt_funkend:
                    RTS
 
 
-DSP_mt_chan1temp:				ds.b						DSP_size_mt_chanXtemp
-DSP_mt_chan2temp:				ds.b						DSP_size_mt_chanXtemp
-DSP_mt_chan3temp:				ds.b						DSP_size_mt_chanXtemp
-DSP_mt_chan4temp:				ds.b						DSP_size_mt_chanXtemp
-DSP_mt_chanend:			; fin des mt_chan
-
-
-DSP_mt_SampleStarts:			ds.l							31			; pointeurs samples instruments
-
-DSP_mt_SongDataPtr:     		dc.l       					0
-
-DSP_mt_speed:      			     					dc.l	     6
-DSP_mt_counter:         							dc.l       0
-DSP_mt_SongPos:         							dc.l       0
-DSP_mt_PBreakPos:       						dc.l       0
-DSP_mt_PosJumpFlag:     					dc.l       0
-DSP_mt_PBreakFlag:      						dc.l       0
-DSP_mt_LowMask:         						dc.l       0
-DSP_mt_PattDelTime:     						dc.l       0
-DSP_mt_PattDelTime2:    						dc.l       0,0
-DSP_mt_PatternPos:     		 					dc.l       0
-DSP_mt_DMACONtemp:   					dc.l       0
-DSP_mt_LoadPointer:     						dc.l       0
-DSP_mt_Enable:          							dc.l       0
 		.phrase
-
-
-
-
-
-
-
-
-
-
-
 
 mt_chan1temp:       dc.l       0,0,0,0,0,$00010000,0,  0,0,0,0,0				; 12*4=48
 mt_chan2temp:       dc.l       0,0,0,0,0,$00020000,0,  0,0,0,0,0
@@ -1540,524 +1452,517 @@ mt_PatternPos:      dc.w       0
 mt_DMACONtemp:      dc.w       0
 mt_LoadPointer:     dc.w       0
 mt_Enable:          dc.b       0
-		.phrase
+    .phrase
 ; -----------------------------------------------------
 
-
-
-
-
-
-
-
 ; ----------- display infos --------
+        .if        flag_display_infos=1
 display_infos:
-	.if			channel_1=1
+  .if      channel_1=1
 ; pointeur sample en cours / interne
-	move.l	PAULA_sample_location0,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_sample_location0,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; virgule sample en cours / interne
-	move.l	PAULA_sample_location_virgule0,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_sample_location_virgule0,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; end 0 / interne
-	move.l	PAULA_sample_end0,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_sample_end0,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; PAULA_PAULA_increment0
-	move.l	PAULA_increment0,d0
-	bsr		print_nombre_hexa_8_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_increment0,d0
+  bsr    print_nombre_hexa_8_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
-	; ligne suivant
-	moveq	#10,d0
-	bsr		print_caractere
+  ; ligne suivant
+  moveq  #10,d0
+  bsr    print_caractere
 
 
 ; PAULA_volume0
-	move.l	PAULA_volume0,d0
-	bsr		print_nombre_hexa_2_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_volume0,d0
+  bsr    print_nombre_hexa_2_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 
 ; pointeur sample repeat / externe
-	move.l	PAULA_repeat_location0,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_repeat_location0,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; virgule sample repeat fin / externe
-	move.l	PAULA_repeat_end0,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_repeat_end0,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 
-	; ligne suivant
-	moveq	#10,d0
-	bsr		print_caractere
-	.endif
+  ; ligne suivant
+  moveq  #10,d0
+  bsr    print_caractere
+  .endif
 
 ; voie B
-	.if			channel_2=1
+  .if      channel_2=1
 ; pointeur sample en cours / interne
-	move.l	PAULA_sample_location1,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_sample_location1,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; virgule sample en cours / interne
-	move.l	PAULA_sample_location_virgule1,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_sample_location_virgule1,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; end 0 / interne
-	move.l	PAULA_sample_end1,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_sample_end1,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; PAULA_PAULA_increment0
-	move.l	PAULA_increment1,d0
-	bsr		print_nombre_hexa_8_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_increment1,d0
+  bsr    print_nombre_hexa_8_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 
-	; ligne suivant
-	moveq	#10,d0
-	bsr		print_caractere
+  ; ligne suivant
+  moveq  #10,d0
+  bsr    print_caractere
 
 ; PAULA_volume0
-	move.l	PAULA_volume1,d0
-	bsr		print_nombre_hexa_2_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_volume1,d0
+  bsr    print_nombre_hexa_2_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 
 ; pointeur sample repeat / externe
-	move.l	PAULA_repeat_location1,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_repeat_location1,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; virgule sample repeat fin / externe
-	move.l	PAULA_repeat_end1,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_repeat_end1,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 
-	; ligne suivant
-	moveq	#10,d0
-	bsr		print_caractere
-	.endif
-	
+  ; ligne suivant
+  moveq  #10,d0
+  bsr    print_caractere
+  .endif
+
 ; voie C
-	.if		channel_3=1
+  .if    channel_3=1
 ; pointeur sample en cours / interne
-	move.l	PAULA_sample_location2,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_sample_location2,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; virgule sample en cours / interne
-	move.l	PAULA_sample_location_virgule2,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_sample_location_virgule2,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; end 0 / interne
-	move.l	PAULA_sample_end2,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_sample_end2,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; PAULA_PAULA_increment0
-	move.l	PAULA_increment2,d0
-	bsr		print_nombre_hexa_8_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_increment2,d0
+  bsr    print_nombre_hexa_8_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 
-	; ligne suivant
-	moveq	#10,d0
-	bsr		print_caractere
+  ; ligne suivant
+  moveq  #10,d0
+  bsr    print_caractere
 
 ; PAULA_volume0
-	move.l	PAULA_volume2,d0
-	bsr		print_nombre_hexa_2_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_volume2,d0
+  bsr    print_nombre_hexa_2_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 
 ; pointeur sample repeat / externe
-	move.l	PAULA_repeat_location2,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_repeat_location2,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; virgule sample repeat fin / externe
-	move.l	PAULA_repeat_end2,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_repeat_end2,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 
-	; ligne suivant
-	moveq	#10,d0
-	bsr		print_caractere
-	.endif
+  ; ligne suivant
+  moveq  #10,d0
+  bsr    print_caractere
+  .endif
 
 ; voie D
-	.if		channel_4=1
+  .if    channel_4=1
 ; pointeur sample en cours / interne
-	move.l	PAULA_sample_location3,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_sample_location3,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; virgule sample en cours / interne
-	move.l	PAULA_sample_location_virgule3,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_sample_location_virgule3,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; end 0 / interne
-	move.l	PAULA_sample_end3,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_sample_end3,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; PAULA_PAULA_increment0
-	move.l	PAULA_increment3,d0
-	bsr		print_nombre_hexa_8_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_increment3,d0
+  bsr    print_nombre_hexa_8_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 
-	; ligne suivant
-	moveq	#10,d0
-	bsr		print_caractere
+  ; ligne suivant
+  moveq  #10,d0
+  bsr    print_caractere
 
 ; PAULA_volume0
-	move.l	PAULA_volume3,d0
-	bsr		print_nombre_hexa_2_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_volume3,d0
+  bsr    print_nombre_hexa_2_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 
 ; pointeur sample repeat / externe
-	move.l	PAULA_repeat_location3,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_repeat_location3,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; virgule sample repeat fin / externe
-	move.l	PAULA_repeat_end3,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_repeat_end3,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 
-	; ligne suivant
-	moveq	#10,d0
-	bsr		print_caractere
-	.endif
+  ; ligne suivant
+  moveq  #10,d0
+  bsr    print_caractere
+  .endif
 
 ;SFX
-	; ligne suivant
-	moveq	#10,d0
-	bsr		print_caractere
+  ; ligne suivant
+  moveq  #10,d0
+  bsr    print_caractere
 
 ; pointeur sample en cours / interne
-	move.l	PAULA_sample_location_sfx1,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_sample_location_sfx1,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; end 0 / interne
-	move.l	PAULA_sample_end_sfx1,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_sample_end_sfx1,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; PAULA_PAULA_increment0
-	move.l	PAULA_period_sfx1,d0
-	bsr		print_nombre_hexa_8_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_period_sfx1,d0
+  bsr    print_nombre_hexa_8_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 
-	; ligne suivant
-	moveq	#10,d0
-	bsr		print_caractere
+  ; ligne suivant
+  moveq  #10,d0
+  bsr    print_caractere
 
 ; PAULA_volume0
-	move.l	PAULA_volume_sfx1,d0
-	bsr		print_nombre_hexa_2_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_volume_sfx1,d0
+  bsr    print_nombre_hexa_2_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 
 ; pointeur sample repeat / externe
-	move.l	PAULA_repeat_location_sfx1,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_repeat_location_sfx1,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; virgule sample repeat fin / externe
-	move.l	PAULA_repeat_end_sfx1,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_repeat_end_sfx1,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 
-	; ligne suivant
-	moveq	#10,d0
-	bsr		print_caractere
+  ; ligne suivant
+  moveq  #10,d0
+  bsr    print_caractere
 
 ; pointeur sample en cours / interne
-	move.l	PAULA_sample_location_sfx2,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_sample_location_sfx2,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; end 0 / interne
-	move.l	PAULA_sample_end_sfx2,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_sample_end_sfx2,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; PAULA_PAULA_increment0
-	move.l	PAULA_period_sfx2,d0
-	bsr		print_nombre_hexa_8_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_period_sfx2,d0
+  bsr    print_nombre_hexa_8_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 
-	; ligne suivant
-	moveq	#10,d0
-	bsr		print_caractere
+  ; ligne suivant
+  moveq  #10,d0
+  bsr    print_caractere
 
 ; PAULA_volume0
-	move.l	PAULA_volume_sfx2,d0
-	bsr		print_nombre_hexa_2_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_volume_sfx2,d0
+  bsr    print_nombre_hexa_2_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 
 ; pointeur sample repeat / externe
-	move.l	PAULA_repeat_location_sfx2,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_repeat_location_sfx2,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 ; virgule sample repeat fin / externe
-	move.l	PAULA_repeat_end_sfx2,d0
-	lsr.l		#8,d0
-	lsr.l		#nb_bits_virgule_offset-8,d0
-	bsr		print_nombre_hexa_6_chiffres
-; 
-	move.l	#' ',d0
-	bsr		print_caractere
+  move.l  PAULA_repeat_end_sfx2,d0
+  lsr.l    #8,d0
+  lsr.l    #nb_bits_virgule_offset-8,d0
+  bsr    print_nombre_hexa_6_chiffres
+;
+  move.l  #' ',d0
+  bsr    print_caractere
 
 
 
-	; retour a la ligne	 au dessus
-	.if			channel_1=1
-	.rept			2
-	moveq	#8,d0
-	bsr		print_caractere
-	.endr
-	.endif
-	.if			channel_2=1
-	.rept			2
-	moveq	#8,d0
-	bsr		print_caractere
-	.endr
-	.endif
-	.if			channel_3=1
-	.rept			2
-	moveq	#8,d0
-	bsr		print_caractere
-	.endr
-	.endif
-	.if			channel_4=1
-	.rept			2
-	moveq	#8,d0
-	bsr		print_caractere
-	.endr
-	.endif
+  ; retour a la ligne   au dessus
+  .if      channel_1=1
+  .rept      2
+  moveq  #8,d0
+  bsr    print_caractere
+  .endr
+  .endif
+  .if      channel_2=1
+  .rept      2
+  moveq  #8,d0
+  bsr    print_caractere
+  .endr
+  .endif
+  .if      channel_3=1
+  .rept      2
+  moveq  #8,d0
+  bsr    print_caractere
+  .endr
+  .endif
+  .if      channel_4=1
+  .rept      2
+  moveq  #8,d0
+  bsr    print_caractere
+  .endr
+  .endif
 ; SFX
-	.rept			4
-	moveq	#8,d0
-	bsr		print_caractere
-	.endr
+  .rept      4
+  moveq  #8,d0
+  bsr    print_caractere
+  .endr
 
 
-	rts
-
+  rts
+ endif
 ;-----------------------------------------------------------------------------------
 ;--------------------------
 ; VBL
 
 VBL:
 ; vbl interrupt, but also DSP to 68000 interrupt
-; 
-                movem.l 	d0-d7/a0-a6,-(a7)
-                bsr     copy_olist              	; use Blitter to update active list from shadow
-                addq.l	#1,vbl_counter
-				
-				
+;
+                movem.l   d0-d7/a0-a6,-(a7)
+                bsr     copy_olist                ; use Blitter to update active list from shadow
+                addq.l  #1,vbl_counter
+
 ; test keys / pad
 ; xxxxxxCx xxBx2580 147*oxAP 369#RLDU
-				move.l		DSP_pad1,d0
-				move.l		d0,d1
-				and.l			#U235SE_BUT_A,d1
-				beq.s		.pas_button_A
-				moveq		#0,d0			; sample=0
-				moveq		#0,d1			; left
-				bsr		plays_speech_sfx
+        move.l    DSP_pad1,d0
+        move.l    d0,d1
+        and.l      #U235SE_BUT_A,d1
+        beq.s    .pas_button_A
+        moveq    #0,d0      ; sample=0
+        moveq    #0,d1      ; left
+        bsr    plays_speech_sfx
 .pas_button_A:
-				move.l		d0,d1
-				and.l			#U235SE_BUT_B,d1
-				beq.s		.pas_button_B
-				moveq		#1,d0			; sample=1
-				moveq		#1,d1			; right
-				bsr		plays_speech_sfx
+        move.l    d0,d1
+        and.l      #U235SE_BUT_B,d1
+        beq.s    .pas_button_B
+        moveq    #1,d0      ; sample=1
+        moveq    #1,d1      ; right
+        bsr    plays_speech_sfx
 .pas_button_B:
-				move.l		d0,d1
-				and.l			#U235SE_BUT_C,d1
-				beq.s		.pas_button_C
-				moveq		#2,d0			; sample=2
-				moveq		#0,d1			; left
-				bsr		plays_speech_sfx
+        move.l    d0,d1
+        and.l      #U235SE_BUT_C,d1
+        beq.s    .pas_button_C
+        moveq    #2,d0      ; sample=2
+        moveq    #0,d1      ; left
+        bsr    plays_speech_sfx
 .pas_button_C:
-				
-				
-				
+
+
+
 VBL_exit:
                 movem.l (a7)+,d0-d7/a0-a6
 VBL_empty:
-                move.w		 	 #$101,INT1              	; Signal we're done						= $F000E0		$101 = clear VI
-				move.w  	#$0,INT2						; The bus priorities restored = $F000E2
+                move.w        #$101,INT1                ; Signal we're done            = $F000E0    $101 = clear VI
+        move.w    #$0,INT2            ; The bus priorities restored = $F000E2
                rte
 
 
 copy_custom_paula_to_buffers_paula_asynchrones:
-		lea					Paula_custom,a1
-		lea					buffers_paula_asynchrones,a2
-		movem.l			(a1)+,d0/d2-d7/a0/a3-a6			; 12*4
-		movem.l			d0/d2-d7/a0/a3-a6,(a2)
-		movem.l			(a1)+,d0/d2-d4							; 4*4
-		movem.l			d0/d2-d4,(12*4)(a2)
-		
-		
+    lea          Paula_custom,a1
+    lea          buffers_paula_asynchrones,a2
+    movem.l      (a1)+,d0/d2-d7/a0/a3-a6      ; 12*4
+    movem.l      d0/d2-d7/a0/a3-a6,(a2)
+    movem.l      (a1)+,d0/d2-d4              ; 4*4
+    movem.l      d0/d2-d4,(12*4)(a2)
+
+
 		.if					1=0
-		;clear
-		lea					Paula_custom,a1
-		moveq			#0,d0
-		.rept				16
-		move.l			d0,(a1)+
-		.endr
+    ;clear
+    lea          Paula_custom,a1
+    moveq      #0,d0
+    .rept        16
+    move.l      d0,(a1)+
+    .endr
 		.endif
-		
+
 ; ne clear  que interne ?
 		lea					Paula_custom,a1
 		moveq			#0,d0
@@ -2065,54 +1970,54 @@ copy_custom_paula_to_buffers_paula_asynchrones:
 		move.l			d0,12+16(a1)
 		move.l			d0,12+32(a1)
 		move.l			d0,12+48(a1)
-		
-		
-		rts
+
+
+    rts
 
 
 mt_music_copy_volume_and_enable_DMA:
 ;gestion dma
-					move.w			mt_DMACONtemp,d0
+          move.w      mt_DMACONtemp,d0
 
-					btst				#0,d0
-					beq.s			.dmavoie1
-; copie location + length dans interne					
-					move.l		channela,channela+12
-					move.w		channela+4,channela+10
+          btst        #0,d0
+          beq.s      .dmavoie1
+; copie location + length dans interne
+          move.l    channela,channela+12
+          move.w    channela+4,channela+10
                    LEA        mt_chan1temp(PC),A6
-                   MOVE.L     n_loopstart(A6),channela				; location 
-                   MOVE.W     n_replen(A6),channela+4			; length
-					
+                   MOVE.L     n_loopstart(A6),channela        ; location
+                   MOVE.W     n_replen(A6),channela+4      ; length
+
 
 .dmavoie1:
-					btst				#1,d0
-					beq.s			.dmavoie2
-; copie location + length dans interne					
-					move.l		channelb,channelb+12
-					move.w		channelb+4,channelb+10
+          btst        #1,d0
+          beq.s      .dmavoie2
+; copie location + length dans interne
+          move.l    channelb,channelb+12
+          move.w    channelb+4,channelb+10
                    LEA        mt_chan2temp(PC),A6
-                   MOVE.L     n_loopstart(A6),channelb				; location 
-                   MOVE.W     n_replen(A6),channelb+4			; length
+                   MOVE.L     n_loopstart(A6),channelb        ; location
+                   MOVE.W     n_replen(A6),channelb+4      ; length
 
 .dmavoie2:
-					btst				#2,d0
-					beq.s			.dmavoie3
-; copie location + length dans interne					
-					move.l		channelc,channelc+12
-					move.w		channelc+4,channelc+10
+          btst        #2,d0
+          beq.s      .dmavoie3
+; copie location + length dans interne
+          move.l    channelc,channelc+12
+          move.w    channelc+4,channelc+10
                    LEA        mt_chan3temp(PC),A6
-                   MOVE.L     n_loopstart(A6),channelc				; location 
-                   MOVE.W     n_replen(A6),channelc+4			; length
+                   MOVE.L     n_loopstart(A6),channelc        ; location
+                   MOVE.W     n_replen(A6),channelc+4      ; length
 
 .dmavoie3:
-					btst				#3,d0
-					beq.s			.dmavoie4
-; copie location + length dans interne					
-					move.l		channeld,channeld+12
-					move.w		channeld+4,channeld+10
+          btst        #3,d0
+          beq.s      .dmavoie4
+; copie location + length dans interne
+          move.l    channeld,channeld+12
+          move.w    channeld+4,channeld+10
                    LEA        mt_chan4temp(PC),A6
-                   MOVE.L     n_loopstart(A6),channeld				; location 
-                   MOVE.W     n_replen(A6),channeld+4			; length
+                   MOVE.L     n_loopstart(A6),channeld        ; location
+                   MOVE.W     n_replen(A6),channeld+4      ; length
 
 .dmavoie4:
 
@@ -2120,608 +2025,60 @@ mt_music_copy_volume_and_enable_DMA:
                    move.w     mt_chan2temp+n_realvolume(pc),Paula_custom_V2
                    move.w     mt_chan3temp+n_realvolume(pc),Paula_custom_V3
                    move.w     mt_chan4temp+n_realvolume(pc),Paula_custom_V4
-	rts
+  rts
 
 mt_music_copy_loop_pointers:
-				
+
                    clr.w      mt_DMACONtemp
                    clr.w      mt_LoadPointer
-					rts
+          rts
 
 
 plays_speech_sfx:
 ; d1=sfx channel ( 0=left / 1=right)
 ; volume = 63 / period = $240
-			lea			sample,a0
-			moveq		#0,d1
+      lea      sample,a0
+      moveq    #0,d1
 
-			moveq		#0,d4
-			lea			PAULA_SFX_left,a1
-			cmp.w		#1,d1
-			bne.s		.left
-			lea			PAULA_SFX_right,a1
+      moveq    #0,d4
+      lea      PAULA_SFX_left,a1
+      cmp.w    #1,d1
+      bne.s    .left
+      lea      PAULA_SFX_right,a1
 .left:
-			move.l		(a1),d6
-			cmp.w		#0,d6
-			bne.s		.exit					; deja un sfx sur la meme voie
-			move.l		#63,d6
-			move.l		#$240,d7
-
-			move.l		#sample,d3
-			lsl.l			#8,d3
-			lsl.l			#nb_bits_virgule_offset-8,d3		; location << nb_bits_virgule_offset
-			
-			move.l		#fin_sample,d5
-			lsl.l			#8,d5
-			lsl.l			#nb_bits_virgule_offset-8,d5		; end << nb_bits_virgule_offset
-
-			movem.l	d3-d7,(a1)
-.exit:			
-			rts
-
-
-		rts
-
-
-; ---------------------------------------
-; print pads status 
-; Pads : mask = xxxxxxCx xxBx2580 147*oxAP 369#RLDU
-print_pads_status:
-	
-	move.l		DSP_pad1,d1
-	lea			string_pad_status,a0
-	move.l		#31,d6
-
-.boucle:	
-	moveq		#0,d0
-	btst.l		d6,d1
-	beq.s		.print_space
-	move.b		(a0)+,d0
-	bsr			print_caractere
-	bra.s		.ok
-.print_space:
-	move.b		#'.',d0
-	bsr			print_caractere
-	lea			1(a0),a0
-.ok:
-	dbf			d6,.boucle
-
-; ligne suivante
-	moveq		#10,d0
-	bsr			print_caractere
-	
-print_pads_status_pad2:
-; pad2
-	move.l		DSP_pad2,d1
-	lea			string_pad_status,a0
-	move.l		#31,d6
-
-.boucle2:	
-	moveq		#0,d0
-	btst.l		d6,d1
-	beq.s		.print_space2
-	move.b		(a0)+,d0
-	bsr			print_caractere
-	bra.s		.ok2
-.print_space2:
-	move.b		#'.',d0
-	bsr			print_caractere
-	lea			1(a0),a0
-.ok2:
-	dbf			d6,.boucle2
-
-; ligne suivante
-	moveq		#10,d0
-	bsr			print_caractere
-	
-
-	rts
-
-string_pad_status:		dc.b		"......CE..BD2580147*oFAp369#RLDU"
-		even
-
-; ---------------------------------------
-; imprime une chaine terminée par un zéro
-; a0=pointeur sur chaine
-print_string:
-	movem.l d0-d7/a0-a6,-(a7)	
-
-print_string_boucle:
-	moveq	#0,d0
-	move.b	(a0)+,d0
-	cmp.w	#0,d0
-	bne.s	print_string_pas_fin_de_chaine
-	movem.l (a7)+,d0-d7/a0-a6
-	rts
-print_string_pas_fin_de_chaine:
-	bsr		print_caractere
-	bra.s	print_string_boucle
-
-; ---------------------------------------
-; imprime un nombre HEXA de 2 chiffres
-print_nombre_hexa_2_chiffres:
-	movem.l d0-d7/a0-a6,-(a7)
-	lea		convert_hexa,a0
-	move.l		d0,d1
-	divu		#16,d0
-	and.l		#$F,d0			; limite a 0-15
-	move.l		d0,d2
-	mulu		#16,d2
-	sub.l		d2,d1
-	move.b		(a0,d0.w),d0
-	bsr			print_caractere
-	move.l		d1,d0
-	and.l		#$F,d0			; limite a 0-15
-	move.b		(a0,d0.w),d0
-	bsr			print_caractere
-	movem.l (a7)+,d0-d7/a0-a6
-	rts
-	
-convert_hexa:
-	dc.b		48,49,50,51,52,53,54,55,56,57
-	dc.b		65,66,67,68,69,70
-	even
-	
-; ---------------------------------------
-; imprime un nombre de 2 chiffres
-print_nombre_2_chiffres:
-	movem.l d0-d7/a0-a6,-(a7)
-	move.l		d0,d1
-	divu		#10,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#10,d2
-	sub.l		d2,d1
-	cmp.l		#0,d0
-	beq.s		.zap
-	add.l		#48,d0
-	bsr			print_caractere
-.zap:
-	move.l		d1,d0
-	add.l		#48,d0
-	bsr			print_caractere
-	movem.l (a7)+,d0-d7/a0-a6
-	rts
-
-; ---------------------------------------
-; imprime un nombre de 3 chiffres
-print_nombre_3_chiffres:
-	movem.l d0-d7/a0-a6,-(a7)
-	move.l		d0,d1
-
-	divu		#100,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#100,d2
-	sub.l		d2,d1
-	cmp.l		#0,d0
-	beq.s		.zap
-	add.l		#48,d0
-	bsr			print_caractere
-.zap:
-	move.l		d1,d0	
-	divu		#10,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#10,d2
-	sub.l		d2,d1
-	add.l		#48,d0
-	bsr			print_caractere
-	
-	move.l		d1,d0
-	add.l		#48,d0
-	bsr			print_caractere
-	movem.l (a7)+,d0-d7/a0-a6
-	rts
-
-
-; ---------------------------------------
-; imprime un nombre de 2 chiffres , 00
-print_nombre_2_chiffres_force:
-	movem.l d0-d7/a0-a6,-(a7)
-	move.l		d0,d1
-	divu		#10,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#10,d2
-	sub.l		d2,d1
-	add.l		#48,d0
-	bsr			print_caractere
-	move.l		d1,d0
-	add.l		#48,d0
-	bsr			print_caractere
-	movem.l (a7)+,d0-d7/a0-a6
-	rts
-
-; ---------------------------------------
-; imprime un nombre de 4 chiffres HEXA
-print_nombre_hexa_4_chiffres:
-	movem.l d0-d7/a0-a6,-(a7)
-	move.l		d0,d1
-	lea		convert_hexa,a0
-
-	divu		#4096,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#4096,d2
-	sub.l		d2,d1
-	move.b		(a0,d0.w),d0
-	bsr			print_caractere
-
-	move.l		d1,d0
-	divu		#256,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#256,d2
-	sub.l		d2,d1
-	move.b		(a0,d0.w),d0
-	bsr			print_caractere
-
-
-	move.l		d1,d0
-	divu		#16,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#16,d2
-	sub.l		d2,d1
-	move.b		(a0,d0.w),d0
-	bsr			print_caractere
-	move.l		d1,d0
-	move.b		(a0,d0.w),d0
-	bsr			print_caractere
-	movem.l (a7)+,d0-d7/a0-a6
-	rts
-
-; ---------------------------------------
-; imprime un nombre de 6 chiffres HEXA ( pour les adresses memoire)
-print_nombre_hexa_6_chiffres:
-	movem.l d0-d7/a0-a6,-(a7)
-	
-	move.l		d0,d1
-	lea		convert_hexa,a0
-
-	move.l		d1,d0
-	swap		d0
-	and.l		#$F0,d0
-	divu		#16,d0
-	and.l		#$F,d0
-	move.b		(a0,d0.w),d0
-	and.l		#$FF,d0
-	bsr			print_caractere
-
-	move.l		d1,d0
-	swap		d0
-	and.l		#$F,d0
-	move.b		(a0,d0.w),d0
-	and.l		#$FF,d0
-	bsr			print_caractere
-
-	and.l		#$FFFF,d1
-	move.l		d1,d0
-	divu		#4096,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#4096,d2
-	sub.l		d2,d1
-	move.b		(a0,d0.w),d0
-	bsr			print_caractere
-
-	move.l		d1,d0
-	divu		#256,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#256,d2
-	sub.l		d2,d1
-	move.b		(a0,d0.w),d0
-	bsr			print_caractere
-
-
-	move.l		d1,d0
-	divu		#16,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#16,d2
-	sub.l		d2,d1
-	move.b		(a0,d0.w),d0
-	bsr			print_caractere
-	move.l		d1,d0
-	move.b		(a0,d0.w),d0
-	bsr			print_caractere
-	movem.l (a7)+,d0-d7/a0-a6
-	rts
-
-; ---------------------------------------
-; imprime un nombre de 8 chiffres HEXA ( pour les adresses memoire et les données en 16:16)
-print_nombre_hexa_8_chiffres:
-	movem.l d0-d7/a0-a6,-(a7)
-	
-	move.l		d0,d1
-	lea		convert_hexa,a0
-
-	move.l		d1,d0
-	swap		d0
-	and.l		#$F000,d0
-	divu		#4096,d0
-	and.l		#$F,d0
-	move.b		(a0,d0.w),d0
-	and.l		#$FF,d0
-	bsr			print_caractere
-
-
-
-	move.l		d1,d0
-	swap		d0
-	and.l		#$F00,d0
-	divu		#256,d0
-	and.l		#$F,d0
-	move.b		(a0,d0.w),d0
-	and.l		#$FF,d0
-	bsr			print_caractere
-
-
-	move.l		d1,d0
-	swap		d0
-	and.l		#$F0,d0
-	divu		#16,d0
-	and.l		#$F,d0
-	move.b		(a0,d0.w),d0
-	and.l		#$FF,d0
-	bsr			print_caractere
-
-	move.l		d1,d0
-	swap		d0
-	and.l		#$F,d0
-	move.b		(a0,d0.w),d0
-	and.l		#$FF,d0
-	bsr			print_caractere
-
-	and.l		#$FFFF,d1
-	move.l		d1,d0
-	divu		#4096,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#4096,d2
-	sub.l		d2,d1
-	move.b		(a0,d0.w),d0
-	bsr			print_caractere
-
-	move.l		d1,d0
-	divu		#256,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#256,d2
-	sub.l		d2,d1
-	move.b		(a0,d0.w),d0
-	bsr			print_caractere
-
-
-	move.l		d1,d0
-	divu		#16,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#16,d2
-	sub.l		d2,d1
-	move.b		(a0,d0.w),d0
-	bsr			print_caractere
-	move.l		d1,d0
-	move.b		(a0,d0.w),d0
-	bsr			print_caractere
-	movem.l (a7)+,d0-d7/a0-a6
-	rts
-
-
-; ---------------------------------------
-; imprime un nombre de 4 chiffres
-print_nombre_4_chiffres:
-	movem.l d0-d7/a0-a6,-(a7)
-	move.l		d0,d1
-
-	divu		#1000,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#1000,d2
-	sub.l		d2,d1
-	add.l		#48,d0
-	bsr			print_caractere
-
-	move.l		d1,d0
-	divu		#100,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#100,d2
-	sub.l		d2,d1
-	add.l		#48,d0
-	bsr			print_caractere
-
-
-	move.l		d1,d0
-	divu		#10,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#10,d2
-	sub.l		d2,d1
-	add.l		#48,d0
-	bsr			print_caractere
-	move.l		d1,d0
-	add.l		#48,d0
-	bsr			print_caractere
-	movem.l (a7)+,d0-d7/a0-a6
-	rts
-
-; ---------------------------------------
-; imprime un nombre de 5 chiffres
-print_nombre_5_chiffres:
-	movem.l d0-d7/a0-a6,-(a7)
-	move.l		d0,d1
-
-	divu		#10000,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#10000,d2
-	sub.l		d2,d1
-	add.l		#48,d0
-	bsr			print_caractere
-
-	move.l		d1,d0
-	divu		#1000,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#1000,d2
-	sub.l		d2,d1
-	add.l		#48,d0
-	bsr			print_caractere
-
-	move.l		d1,d0
-	divu		#100,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#100,d2
-	sub.l		d2,d1
-	add.l		#48,d0
-	bsr			print_caractere
-
-
-	move.l		d1,d0
-	divu		#10,d0
-	and.l		#$FF,d0
-	move.l		d0,d2
-	mulu		#10,d2
-	sub.l		d2,d1
-	add.l		#48,d0
-	bsr			print_caractere
-	move.l		d1,d0
-	add.l		#48,d0
-	bsr			print_caractere
-	movem.l (a7)+,d0-d7/a0-a6
-	rts
-
-
-; -----------------------------
-; copie un caractere a l ecran
-; d0.w=caractere
-
-print_caractere:
-	movem.l d0-d7/a0-a6,-(a7)
-
-
-
-	cmp.b	#00,d0
-	bne.s	print_caractere_pas_CLS
-	move.l	#ecran1,A1_BASE			; = DEST
-	move.l	#$0,A1_PIXEL
-	move.l	#PIXEL16|XADDPHR|PITCH1,A1_FLAGS
-	move.l	#ecran1+320*100,A2_BASE			; = source
-	move.l	#$0,A2_PIXEL
-	move.l	#PIXEL16|XADDPHR|PITCH1,A2_FLAGS
-	
-	move.w	#$00,B_PATD
-	
-
-	moveq	#0,d0
-	move.w	#nb_octets_par_ligne,d0
-	lsr.w	#1,d0
-	move.w	#nb_lignes,d1
-	mulu	d1,d0
-	swap	d0
-	move.w	#1,d0
-	swap	d0
-	;move.w	#65535,d0
-	move.l	d0,B_COUNT
-	move.l	#LFU_REPLACE|SRCEN|PATDSEL,B_CMD
-
-
-	movem.l (a7)+,d0-d7/a0-a6
-	rts
-	
-print_caractere_pas_CLS:
-
-	cmp.b	#10,d0
-	bne.s	print_caractere_pas_retourchariot
-	move.w	#0,curseur_x
-	add.w	#8,curseur_y
-	movem.l (a7)+,d0-d7/a0-a6
-	rts
-
-print_caractere_pas_retourchariot:
-	cmp.b	#09,d0
-	bne.s	print_caractere_pas_retourdebutligne
-	move.w	#0,curseur_x
-	movem.l (a7)+,d0-d7/a0-a6
-	rts
-
-print_caractere_pas_retourdebutligne:
-	cmp.b	#08,d0
-	bne.s	print_caractere_pas_retourdebutligneaudessus
-	move.w	#0,curseur_x
-	sub.w	#8,curseur_y
-	movem.l (a7)+,d0-d7/a0-a6
-	rts
-
-
-print_caractere_pas_retourdebutligneaudessus:
-
-	lea		ecran1,a1
-	moveq	#0,d1
-	move.w	curseur_x,d1
-	add.l	d1,a1
-	moveq	#0,d1
-	move.w	curseur_y,d1
-	mulu	#nb_octets_par_ligne,d1
-	add.l	d1,a1
-
-	lsl.l	#3,d0		; * 8
-	lea		fonte,a0
-	add.l	d0,a0
-	
-	
-; copie 1 lettre
-	move.l	#8-1,d0
-copieC_ligne:
-	moveq	#8-1,d1
-	move.b	(a0)+,d2
-copieC_colonne:
-	moveq	#0,d4
-	btst	d1,d2
-	beq.s	pixel_a_zero
-	moveq	#0,d4
-	move.w	couleur_char,d4
-pixel_a_zero:
-	move.b	d4,(a1)+
-	dbf		d1,copieC_colonne
-	lea		nb_octets_par_ligne-8(a1),a1
-	dbf		d0,copieC_ligne
-
-	move.w	curseur_x,d0
-	add.w	#8,d0
-	cmp.w	#320,d0
-	blt		curseur_pas_fin_de_ligne
-	moveq	#0,d0
-	add.w	#8,curseur_y
-curseur_pas_fin_de_ligne:
-	move.w	d0,curseur_x
-
-	movem.l (a7)+,d0-d7/a0-a6
-
-	rts
-
-
+      move.l    (a1),d6
+      cmp.w    #0,d6
+      bne.s    .exit          ; deja un sfx sur la meme voie
+      move.l    #63,d6
+      move.l    #$240,d7
+
+      move.l    #sample,d3
+      lsl.l      #8,d3
+      lsl.l      #nb_bits_virgule_offset-8,d3    ; location << nb_bits_virgule_offset
+
+      move.l    #fin_sample,d5
+      lsl.l      #8,d5
+      lsl.l      #nb_bits_virgule_offset-8,d5    ; end << nb_bits_virgule_offset
+
+      movem.l  d3-d7,(a1)
+.exit:
+      rts
+
+	include "print.inc"
 ;----------------------------------
 ; recopie l'object list dans la courante
 
 copy_olist:
-				move.l	#ob_list_courante,A1_BASE			; = DEST
-				move.l	#$0,A1_PIXEL
-				move.l	#PIXEL16|XADDPHR|PITCH1,A1_FLAGS
-				move.l	#ob_liste_originale,A2_BASE			; = source
-				move.l	#$0,A2_PIXEL
-				move.l	#PIXEL16|XADDPHR|PITCH1,A2_FLAGS
-				move.w	#1,d0
-				swap	d0
-				move.l	#fin_ob_liste_originale-ob_liste_originale,d1
-				move.w	d1,d0
-				move.l	d0,B_COUNT
-				move.l	#LFU_REPLACE|SRCEN,B_CMD
-				rts
+	moveq	#0,d0
+        move.l  #ob_list_courante,A1_BASE      ; = DEST
+        move.l  d0,A1_PIXEL
+        move.l  #PIXEL16|XADDPHR|PITCH1,A1_FLAGS
+        move.l  #ob_liste_originale,A2_BASE      ; = source
+        move.l  d0,A2_PIXEL
+        move.l  #PIXEL16|XADDPHR|PITCH1,A2_FLAGS
+        move.l  #(1<<16)|fin_ob_liste_originale-ob_liste_originale,B_COUNT
+        move.l  #LFU_REPLACE|SRCEN,B_CMD
+        rts
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -2730,202 +2087,196 @@ copy_olist:
 ;;
 
 InitVideo:
-                movem.l d0-d6,-(sp)
+;; -*-asm-*-
+;;****************
+;;   videoinit   *
+VideoInit:
+        movem.l d0-d2/a0,-(sp)
+	movem.l	pal_init(pc),d0-d2/a0
+        btst    #4,$00F14003
+        beq.s   VideoInit1              ;; =0 => PAL
+	movem.l	ntsc_init(pc),d0-d2
+VideoInit1:
+        move.l  d2,(a0)+                ; HDB1/2
+        move.w  d0,(a0)+                ; HDE
+        addq.l  #8,a0
 
-				
-				move.w	#-1,ntsc_flag
-				move.l	#50,_50ou60hertz
-	
-				move.w  CONFIG,d0                ; Also is joystick register
-                andi.w  #VIDTYPE,d0              ; 0 = PAL, 1 = NTSC
-                beq     .palvals
-				move.w	#1,ntsc_flag
-				move.l	#60,_50ou60hertz
-	
+        swap    d0
+        move.w  d0,(a0)+                ; VDB
 
-.ntscvals:		move.w  #NTSC_HMID,d2
-                move.w  #NTSC_WIDTH,d0
+        move.w  d0,a_vdb
 
-                move.w  #NTSC_VMID,d6
-                move.w  #NTSC_HEIGHT,d4
-				
-                bra     calc_vals
-.palvals:
-				move.w #PAL_HMID,d2
-				move.w #PAL_WIDTH,d0
+        move.w  d1,(a0)+                ; VDE
 
-				move.w #PAL_VMID,d6				
-				move.w #PAL_HEIGHT,d4
+        move.w  d1,a_vde
 
-				
-calc_vals:		
-                move.w  d0,width
-                move.w  d4,height
-                move.w  d0,d1
-                asr     #1,d1                   ; Width/2
-                sub.w   d1,d2                   ; Mid - Width/2
-                add.w   #4,d2                   ; (Mid - Width/2)+4
-                sub.w   #1,d1                   ; Width/2 - 1
-                ori.w   #$400,d1                ; (Width/2 - 1)|$400
-                move.w  d1,a_hde
-                move.w  d1,HDE
-                move.w  d2,a_hdb
-                move.w  d2,HDB1
-                move.w  d2,HDB2
-                move.w  d6,d5
-                sub.w   d4,d5
-                add.w   #16,d5
-                move.w  d5,a_vdb
-                add.w   d4,d6
-                move.w  d6,a_vde
-			
-			    move.w  a_vdb,VDB
-				move.w  a_vde,VDE    
-				
-				
-				move.l  #0,BORD1                ; Black border
-                move.w  #0,BG                   ; Init line buffer to black
-                movem.l (sp)+,d0-d6
-                rts
+	moveq   #-1,d0
+        move.w  d0,$4e-$48(a0)          ; VI
+
+        move.l  #0,BORD1                ; Black border
+        move.w  #0,BG                   ; Init line buffer to black
+
+        movem.l (sp)+,d0-d2/a0
+        rts
+
+pal_init:
+	dc.l	(PAL_VMID-PAL_HEIGHT)<<16|(((PAL_WIDTH>>1)-1)|$0400)
+	dc.l	PAL_VMID+PAL_HEIGHT
+	dc.l	(PAL_HMID-(PAL_WIDTH>>1)+4)<<16|PAL_HMID-(PAL_WIDTH>>1)+4
+	dc.l	$f00038
+
+ntsc_init:
+	dc.l	(NTSC_VMID-NTSC_HEIGHT)<<16|(((NTSC_WIDTH>>1)-1)|$0400)
+	dc.l	NTSC_VMID+NTSC_HEIGHT
+	dc.l	(NTSC_HMID-(NTSC_WIDTH>>1)+4)<<16|NTSC_HMID-(NTSC_WIDTH>>1)+4
 
 ; - routines de debug
 ;
 bus_error_68000:
-	;.if			GD_DEBUG=1
-	;lea			debug_USB_GD__bus_error,a0
-	;jsr			fonction_GD_DebugString
-	;.endif
-	moveq		#0,d0
+  ;.if      GD_DEBUG=1
+  ;lea      debug_USB_GD__bus_error,a0
+  ;jsr      fonction_GD_DebugString
+  ;.endif
+  moveq    #0,d0
 bus_error_68000_2:
-	move.w	d0,BG						
-	move.w	d0,BORD1
-	addq.w	#1,d0
-	bra.s	bus_error_68000_2
+  move.w  d0,BG
+  move.w  d0,BORD1
+  addq.w  #1,d0
+  bra.s  bus_error_68000_2
 
 address_error_68000:
-	;.if			GD_DEBUG=1
-	;lea			debug_USB_GD__address_error,a0
-	;jsr			fonction_GD_DebugString
-	;.endif
-	moveq		#0,d0
+  ;.if      GD_DEBUG=1
+  ;lea      debug_USB_GD__address_error,a0
+  ;jsr      fonction_GD_DebugString
+  ;.endif
+  moveq    #0,d0
 address_error_68000_2:
-	move.w	d0,BG						
-	addq.w	#1,d0
-	bra.s	address_error_68000_2
+  move.w  d0,BG
+  addq.w  #1,d0
+  bra.s  address_error_68000_2
 
 
-	.68000
-	.dphrase
-	.text
+  long
+  .text
 
-	.phrase
-	.include	"Paula_v2_1_include.s"
-	
-	.68000
-	.text
-	
-	.rept				7
-	dc.l				0
-	.endr
-	
-	.data
-	
-	
-	.dphrase
+  .include  "Paula_v2_1_include.s"
+
+  .68000
+  .text
+
+  .rept        7
+  dc.l        0
+  .endr
+
+DSP_mt_chan1temp:        ds.b            DSP_size_mt_chanXtemp
+DSP_mt_chan2temp:        ds.b            DSP_size_mt_chanXtemp
+DSP_mt_chan3temp:        ds.b            DSP_size_mt_chanXtemp
+DSP_mt_chan4temp:        ds.b            DSP_size_mt_chanXtemp
+DSP_mt_chanend:      ; fin des mt_chan
+
+
+DSP_mt_SampleStarts:      ds.l              31      ; pointeurs samples instruments
+
+DSP_mt_SongDataPtr:         dc.l                 0
+
+DSP_mt_speed:                      dc.l       6
+DSP_mt_counter:                       dc.l       0
+DSP_mt_SongPos:                       dc.l       0
+DSP_mt_PBreakPos:                   dc.l       0
+DSP_mt_PosJumpFlag:               dc.l       0
+DSP_mt_PBreakFlag:                  dc.l       0
+DSP_mt_LowMask:                     dc.l       0
+DSP_mt_PattDelTime:                 dc.l       0
+DSP_mt_PattDelTime2:                dc.l       0,0
+DSP_mt_PatternPos:                    dc.l       0
+DSP_mt_DMACONtemp:             dc.l       0
+DSP_mt_LoadPointer:                 dc.l       0
+DSP_mt_Enable:                        dc.l       0
+
+  .data
+
+  .dphrase
 Paula_custom:
-channela:	; $dff0a0
+channela:  ; $dff0a0
 ; total = 4+2+2+8 = 16
-		dc.l		silence			; adresse debut sample .L														00
-		dc.w		4				; taille en words du sample .W												04
-		dc.w		0				; period/note du canal																06
+    dc.l    silence      ; adresse debut sample .L                            00
+    dc.w    4        ; taille en words du sample .W                        04
+    dc.w    0        ; period/note du canal                                06
 Paula_custom_V1:
-		dc.w		0				; volume .W 																					08
-		dc.w		0				; length interne																			10
-		dc.l			0		; location interne																		12
+    dc.w    0        ; volume .W                                           08
+    dc.w    0        ; length interne                                      10
+    dc.l      0    ; location interne                                    12
 channelb:
-		dc.l		silence			; adresse debut sample .L														16
-		dc.w		4				; taille en words du sample .W												20
-		dc.w		0				; period/note du canal																22
+    dc.l    silence      ; adresse debut sample .L                            16
+    dc.w    4        ; taille en words du sample .W                        20
+    dc.w    0        ; period/note du canal                                22
 Paula_custom_V2:
-		dc.w		0				; volume .W 																					24
-		dc.w		0				; length interne																			26
-		dc.l			0			; location interne																		28
+    dc.w    0        ; volume .W                                           24
+    dc.w    0        ; length interne                                      26
+    dc.l      0      ; location interne                                    28
 channelc:
-		dc.l		silence			; adresse debut sample .L														32
-		dc.w		4				; taille en words du sample .W												36
-		dc.w		0				; period/note du canal																38
+    dc.l    silence      ; adresse debut sample .L                            32
+    dc.w    4        ; taille en words du sample .W                        36
+    dc.w    0        ; period/note du canal                                38
 Paula_custom_V3:
-		dc.w		0				; volume .W 																					40
-		dc.w		0				; length interne																			42
-		dc.l			0		; location interne																		44
+    dc.w    0        ; volume .W                                           40
+    dc.w    0        ; length interne                                      42
+    dc.l      0    ; location interne                                    44
 channeld:
-		dc.l		silence			; adresse debut sample .L														48
-		dc.w		4				; taille en words du sample .W												52
-		dc.w		0				; period/note du canal																54
+    dc.l    silence      ; adresse debut sample .L                            48
+    dc.w    4        ; taille en words du sample .W                        52
+    dc.w    0        ; period/note du canal                                54
 Paula_custom_V4:
-		dc.w		0				; volume .W 																					56
-		dc.w		0				; length interne																			58
-		dc.l			0		; location interne																		60
+    dc.w    0        ; volume .W                                           56
+    dc.w    0        ; length interne                                      58
+    dc.l      0    ; location interne                                    60
 
 
-chaine_HIPPEL:						dc.b	"protracker player for Jaguar  0.1 ",10,0
-chaine_Hz_init_LSP:				dc.b	" Hz.",10,0
-chaine_replay_frequency:		dc.b	"Replay frequency : ",0
-chaine_frequency_correction:	dc.b	"Frequency correction : ",0
-chaine_replay_volumes:			dc.b	"volumes music/SFX : ",0
-		.phrase
+chaine_HIPPEL:            dc.b  "protracker player for Jaguar  0.1 ",10,0
+chaine_Hz_init_LSP:        dc.b  " Hz.",10,0
+chaine_replay_frequency:    dc.b  "Replay frequency : ",0
+chaine_frequency_correction:  dc.b  "Frequency correction : ",0
+chaine_replay_volumes:      dc.b  "volumes music/SFX : ",0
+    .phrase
 
         .68000
-		.dphrase
-ob_liste_originale:           				 ; This is the label you will use to address this in 68K code
-        .objproc 							   ; Engage the OP assembler
-		.dphrase
-
-        .org    ob_list_courante			 ; Tell the OP assembler where the list will execute
-;
-        branch      VC < 0, .stahp    			 ; Branch to the STOP object if VC < 0
-        branch      VC > 265, .stahp   			 ; Branch to the STOP object if VC > 241
-			; bitmap data addr, xloc, yloc, dwidth, iwidth, iheight, bpp, pallete idx, flags, firstpix, pitch
+    .dphrase
+ob_liste_originale:                    ; This is the label you will use to address this in 68K code
+        .objproc                  ; Engage the OP assembler
+    .dphrase
+        .org    ob_list_courante       ; Tell the OP assembler where the list will execute
+        branch      VC < 30, .stahp
+        branch      VC > 265, .stahp
+      ; bitmap data addr, xloc, yloc, dwidth, iwidth, iheight, bpp, pallete idx, flags, firstpix, pitch
         bitmap      ecran1, 16, 26, nb_octets_par_ligne/8, nb_octets_par_ligne/8, 246-26,3
-		;bitmap		ecran1,16,24,40,40,255,3
-        jump        .haha
 .stahp:
         stop
-.haha:
-        jump        .stahp
-		
-		.68000
-		.dphrase
+
+    .68000
+    .dphrase
 fin_ob_liste_originale:
 
 
-			.data		
-			
-	.dphrase
+      .data
 
-stoplist:		dc.l	0,4
-
-fonte:	
-	.include	"fonte1plan.s"
+	.long
+fonte:
+	.include  "fonte1plan.s"
 	even
 
-couleur_char:				dc.w		25
-curseur_x:					dc.w		0
-curseur_y:					dc.w		curseur_Y_min
-compteur_frame_music:			dc.w				0
-		even
-
-
+couleur_char:         dc.w    25
+curseur_x:            dc.w    0
+curseur_y:            dc.w    curseur_Y_min
+//->compteur_frame_music:      dc.w        0
+    even
 
 module_amiga:
-		incbin				"ELYSIUM.MOD"
-		.even
+    incbin        "ELYSIUM.MOD"
+    .even
 
 sample:
-		incbin				"YIPPEE.raw"					; 8 bits signés, 8000Hz
+    incbin        "YIPPEE.raw"          ; 8 bits signés, 8000Hz
 fin_sample:
-
-
 
 mt_FunkTable:       dc.b       0,5,6,7,8,10,11,13,16,19,22,26,32,43,64,128
 
@@ -3001,69 +2352,38 @@ mt_PeriodTable:
                    dc.w       431,407,384,363,342,323,305,288,272,256,242,228
                    dc.w       216,203,192,181,171,161,152,144,136,128,121,114
 
-
-
-
-	.bss
+  .bss
 
 DEBUT_BSS:
-
-
-
-
 ;------------------------------------------------------
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	.phrase
-taille_une_entree_buffer_asynchrone = 16	
+  .phrase
+taille_une_entree_buffer_asynchrone = 16
 ; 4*
-	; - .L : location / externe					00
-	; - .W : length / externe						04
-	; - .W : note/period									06
-	; - .W : volume												08
-	; - .W : length / interne						10				quand le dmacon est forcé
-	; - .L : location / interne					12				quand le dmacon est forcé
-	; => 16
+  ; - .L : location / externe          00
+  ; - .W : length / externe            04
+  ; - .W : note/period                  06
+  ; - .W : volume                        08
+  ; - .W : length / interne            10        quand le dmacon est forcé
+  ; - .L : location / interne          12        quand le dmacon est forcé
+  ; => 16
 
 buffers_paula_asynchrones:
-		ds.b				taille_une_entree_buffer_asynchrone*4
+    ds.b        taille_une_entree_buffer_asynchrone*4
 
 
 
-_50ou60hertz:			ds.l	1
-ntsc_flag:				ds.w	1
-a_hdb:          		ds.w   1
-a_hde:          		ds.w   1
-a_vdb:          		ds.w   1
-a_vde:          		ds.w   1
-width:          		ds.w   1
-height:         		ds.w   1
-taille_liste_OP:		ds.l	1
-vbl_counter:			ds.l	1
+_50ou60hertz:      ds.l  1
+ntsc_flag:        ds.w  1
+a_hdb:              ds.w   1
+a_hde:              ds.w   1
+a_vdb:              ds.w   1
+a_vde:              ds.w   1
+width:              ds.w   1
+height:             ds.w   1
+taille_liste_OP:    ds.l  1
+vbl_counter:      ds.l  1
 
             .dphrase
-ecran1:				ds.w		320*256				; 8 bitplanes
+ecran1:        ds.w    320*256        ; 8 bitplanes
 FIN_RAM:
