@@ -200,8 +200,7 @@ copie_couleurs:
 
 
 
-  move.w    #0,compteur_frame_music
-
+//->  move.w    #0,compteur_frame_music
   move.w    #85,couleur_char
 
 ; replay frequency
@@ -242,25 +241,17 @@ copie_couleurs:
 
   move.w    #145,couleur_char
 
-
   move.l  #VBL,LEVEL0       ; Install 68K LEVEL0 handler
   move.w  a_vde,d0                  ; Must be ODD
-  ;sub.w   #16,d0
   ori.w   #1,d0
   move.w  d0,VI
 
   move.w  #%01,INT1                   ; Enable video interrupts 11101
-
-
-  ;and.w   #%1111100011111111,sr        ; 1111100011111111 => bits 8/9/10 = 0
-  and.w   #$f8ff,sr
-
+  move.w #$2000,sr
 
     st         mt_Enable            ; enable playback
 
 ;----------------
-  nop
-  nop
 main:
 ; wait timer1
         move.l    Paula_compteur_frames_Timer1,d0
@@ -273,49 +264,45 @@ main2:
         bsr        mt_music_copy_loop_pointers
         bsr        copy_custom_paula_to_buffers_paula_asynchrones
 
-
-
         .if        flag_display_infos=1
         bsr      display_infos
         .endif
         bra.s    main
 ;----------------
 
-
-
 ; -----------------------------------------------------
 ; init protracker pour player DSP
 DSP_mt_init:
-                   move.l		#0,DSP_mt_Enable
+                   move.l    #0,DSP_mt_Enable
 
                    ;move.w     #DEFAULT_BPM,CIA_MusicBPM
-                   lea        		DSP_mt_chan1temp,a4
-                   move.w     	#((DSP_mt_chanend-DSP_mt_chan1temp)/4)-1,d7
-				   moveq		#0,d0
+                   lea            DSP_mt_chan1temp,a4
+                   move.w       #((DSP_mt_chanend-DSP_mt_chan1temp)/4)-1,d7
+           moveq    #0,d0
 .clear:
-                   move.l		d0,(a4)+
-                   dbra       		d7,.clear
+                   move.l    d0,(a4)+
+                   dbra           d7,.clear
 
-                   moveq      	#4-1,d7
-                   lea        		mt_chan1temp,a4
-                   moveq     	#$1,d0
+                   moveq        #4-1,d7
+                   lea            mt_chan1temp,a4
+                   moveq       #$1,d0
 .dmaset:
-                   move.l     	d0,DSP_n_dmabit(a4)
-                   lsl.l		      	#1,d0
-                   lea       	 	mt_chan2temp-mt_chan1temp(a4),a4
-                   dbra       		d7,.dmaset
+                   move.l       d0,DSP_n_dmabit(a4)
+                   lsl.l       #1,d0
+                   lea            mt_chan2temp-mt_chan1temp(a4),a4
+                   dbra           d7,.dmaset
 
                    MOVE.L     A0,mt_SongDataPtr
 
                    MOVE.L     A0,A1
-                   LEA        		952(A1),A1
+                   LEA            952(A1),A1
                    MOVEQ      #127,D0
                    MOVEQ      #0,D1
 DSP_mtloop:
-					MOVE.L     D1,D2
+          MOVE.L     D1,D2
                    SUBQ.W     #1,D0
 DSP_mtloop2:
-					MOVE.B     (A1)+,D1
+          MOVE.B     (A1)+,D1
                    CMP.B      D2,D1
                    BGT.S      DSP_mtloop
                    DBRA       D0,DSP_mtloop2
@@ -2258,17 +2245,12 @@ ob_liste_originale:                    ; This is the label you will use to addre
         .objproc                  ; Engage the OP assembler
     .dphrase
         .org    ob_list_courante       ; Tell the OP assembler where the list will execute
-;
-        branch      VC < 0, .stahp           ; Branch to the STOP object if VC < 0
-        branch      VC > 265, .stahp          ; Branch to the STOP object if VC > 241
+        branch      VC < 30, .stahp
+        branch      VC > 265, .stahp
       ; bitmap data addr, xloc, yloc, dwidth, iwidth, iheight, bpp, pallete idx, flags, firstpix, pitch
         bitmap      ecran1, 16, 26, nb_octets_par_ligne/8, nb_octets_par_ligne/8, 246-26,3
-    ;bitmap    ecran1,16,24,40,40,255,3
-        jump        .haha
 .stahp:
         stop
-.haha:
-        jump        .stahp
 
     .68000
     .dphrase
@@ -2277,18 +2259,15 @@ fin_ob_liste_originale:
 
       .data
 
-  .dphrase
-
-stoplist:    dc.l  0,4
-
+	.long
 fonte:
-  .include  "fonte1plan.s"
-  even
+	.include  "fonte1plan.s"
+	even
 
-couleur_char:        dc.w    25
-curseur_x:          dc.w    0
-curseur_y:          dc.w    curseur_Y_min
-compteur_frame_music:      dc.w        0
+couleur_char:         dc.w    25
+curseur_x:            dc.w    0
+curseur_y:            dc.w    curseur_Y_min
+//->compteur_frame_music:      dc.w        0
     even
 
 module_amiga:
