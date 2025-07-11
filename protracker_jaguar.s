@@ -279,6 +279,21 @@ copie_couleurs:
 	moveq	#10,d0
 	bsr		print_caractere
 
+
+; calcul RAM DSP
+	move.l		#D_ENDRAM,d0
+	sub.l		debut_ram_libre_DSP,d0
+	
+	move.l		a0,-(sp)
+	lea			chaine_RAM_DSP,a0
+	bsr			print_string
+	move.l		(sp)+,a0
+	
+	bsr			print_nombre_4_chiffres
+; ligne suivante
+	moveq		#10,d0
+	bsr			print_caractere
+
 	
 	move.w		#145,couleur_char
 
@@ -1287,8 +1302,8 @@ mt_FilterOnOff:
                    MOVE.B     n_cmdlo(A6),D0
                    AND.B      #1,D0
                    ASL.B      #1,D0
-                   AND.B      #$FD,$BFE001
-                   OR.B       D0,$BFE001
+                   ;AND.B      #$FD,$BFE001
+                   ;OR.B       D0,$BFE001
                    RTS	
 
 mt_SetGlissControl:
@@ -2873,7 +2888,10 @@ chaine_Hz_init_LSP:				dc.b	" Hz.",10,0
 chaine_replay_frequency:		dc.b	"Replay frequency : ",0
 chaine_frequency_correction:	dc.b	"Frequency correction : ",0
 chaine_replay_volumes:			dc.b	"volumes music/SFX : ",0
+chaine_RAM_DSP:					dc.b	"DSP RAM available while running : ",0
+
 		.phrase
+debut_ram_libre_DSP:		dc.l			PAULA_DSP_fin
 
         .68000
 		.dphrase
@@ -2919,6 +2937,7 @@ compteur_frame_music:			dc.w				0
 
 module_amiga:
 		incbin				"ELYSIUM.MOD"
+		;incbin						"../modules/_Tunes/TUNEOMAT.MOD"
 		.even
 
 sample:
